@@ -106,16 +106,22 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
           }));
           setRecentContests(newContests);
 
-          const solved = new Set<string>();
+          // Track ALL unique solved problems (for total count)
+          const allSolved = new Set<string>();
+          // Track only rated ones (for distribution chart)
+          const ratedSolved = new Set<string>();
           const ratingCounts: Record<string, number> = {
             '≤1000': 0, '1001–1200': 0, '1201–1400': 0, '1401–1600': 0, '1601+': 0
           };
 
           data.submissions.forEach((sub: any) => {
-            if (sub.verdict === 'OK' && sub.problem.rating) {
+            if (sub.verdict === 'OK' && sub.problem) {
               const key = `${sub.problem.contestId}-${sub.problem.index}`;
-              if (!solved.has(key)) {
-                solved.add(key);
+              // Count every unique solved problem for the total
+              allSolved.add(key);
+              // Only bucket problems that have a rating
+              if (sub.problem.rating && !ratedSolved.has(key)) {
+                ratedSolved.add(key);
                 const r = sub.problem.rating;
                 if (r <= 1000) ratingCounts['≤1000']++;
                 else if (r <= 1200) ratingCounts['1001–1200']++;
@@ -126,7 +132,7 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
             }
           });
 
-          setTotalSolved(solved.size);
+          setTotalSolved(allSolved.size);
           setProblemStats([
             { difficulty: '≤1000',    count: ratingCounts['≤1000'],    color: '#8884d8' },
             { difficulty: '1001–1200', count: ratingCounts['1001–1200'], color: '#82ca9d' },
