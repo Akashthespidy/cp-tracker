@@ -1,7 +1,6 @@
 'use client';
 
-import { useAtom } from 'jotai';
-import { handleAtom, selectedLadderAtom, sheetProblemsAtom, sheetLoadingAtom } from '@/lib/store';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -9,10 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowRight, BookOpen, Clock, Target, CheckCircle2, Circle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// interface PracticeSheetsProps {
-//   handle: string;
-// }
-// Props interface removed as we use global state now
+interface PracticeSheetsProps {
+  handle: string;
+}
 
 const LADDERS = [
   { id: 'div2a', title: 'Div. 2 A', description: 'Beginner friendly constructive problems', difficulty: '800-1000', count: 100 },
@@ -22,11 +20,10 @@ const LADDERS = [
   { id: 'div2e', title: 'Div. 2 E', description: 'Advanced topics and harder variations', difficulty: '1600-1900', count: 100 },
 ];
 
-export function PracticeSheets() {
-  const [handle] = useAtom(handleAtom);
-  const [selectedLadder, setSelectedLadder] = useAtom(selectedLadderAtom);
-  const [problems, setProblems] = useAtom(sheetProblemsAtom);
-  const [loading, setLoading] = useAtom(sheetLoadingAtom);
+export function PracticeSheets({ handle }: PracticeSheetsProps) {
+  const [selectedLadder, setSelectedLadder] = useState<string | null>(null);
+  const [problems, setProblems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const loadProblems = async (ladderId: string) => {
     setLoading(true);

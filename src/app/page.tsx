@@ -7,23 +7,21 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlatformDashboard } from '@/components/dashboard/PlatformDashboard';
-import { PracticeSheets } from '@/components/dashboard/PracticeSheets';
 import { Activity, Code, Trophy, User, ArrowRight, LayoutGrid, ListTodo } from 'lucide-react';
 import { Toaster } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
+import { useAtom } from 'jotai';
+import { handleAtom } from '@/lib/store';
+import Link from 'next/link';
 
 export default function Home() {
-  const [handle, setHandle] = useState<string | null>(null);
+  const [handle, setHandle] = useAtom(handleAtom);
   const [inputHandle, setInputHandle] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Check local storage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('cp-tracker-handle');
-    if (saved) {
-      setHandle(saved);
-      setInputHandle(saved);
-    }
+    setMounted(true);
   }, []);
 
   const submitHandle = (e?: React.FormEvent) => {
@@ -36,16 +34,16 @@ export default function Home() {
     // Let's set it and let the dashboard handle errors (which it already does).
     setTimeout(() => {
       setHandle(inputHandle.trim());
-      localStorage.setItem('cp-tracker-handle', inputHandle.trim());
       setLoading(false);
     }, 500); // Small artificial delay for effect
   };
 
   const clearHandle = () => {
     setHandle(null);
-    localStorage.removeItem('cp-tracker-handle');
     setInputHandle('');
   };
+
+  if (!mounted) return null; // Avoid hydration mismatch with atomWithStorage
 
   if (!handle) {
     return (
@@ -95,14 +93,27 @@ export default function Home() {
       {/* Navbar */}
       <header className="border-b sticky top-0 bg-background/80 backdrop-blur-md z-50 supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-xl tracking-tight">
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl tracking-tight">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
               <Activity className="h-5 w-5" />
             </div>
             <span>CP Tracker</span>
-          </div>
+          </Link>
           
           <div className="flex items-center gap-4">
+            <nav className="flex items-center gap-1 mr-4">
+              <Link href="/">
+                <Button variant="ghost" className="gap-2">
+                  <LayoutGrid className="w-4 h-4" /> Dashboard
+                </Button>
+              </Link>
+              <Link href="/practice">
+                 <Button variant="ghost" className="gap-2">
+                  <ListTodo className="w-4 h-4" /> Practice Sheets
+                </Button>
+              </Link>
+            </nav>
+
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border">
               <User className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium text-sm">{handle}</span>
@@ -116,19 +127,7 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="dashboard" className="space-y-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-             <TabsList className="bg-muted/50 p-1 h-auto">
-                <TabsTrigger value="dashboard" className="px-4 py-2 gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                  <LayoutGrid className="w-4 h-4" /> Dashboard
-                </TabsTrigger>
-                <TabsTrigger value="practice" className="px-4 py-2 gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                  <ListTodo className="w-4 h-4" /> Practice Sheets
-                </TabsTrigger>
-             </TabsList>
-          </div>
-
-          <TabsContent value="dashboard" className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
              <Tabs defaultValue="Codeforces">
                 <div className="flex items-center justify-between mb-6">
                    <h2 className="text-2xl font-bold tracking-tight">Platform Stats</h2>
@@ -150,12 +149,7 @@ export default function Home() {
                    <PlatformDashboard platform="Codeforces" handle={handle} />
                 </TabsContent>
              </Tabs>
-          </TabsContent>
-
-          <TabsContent value="practice" className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <PracticeSheets handle={handle} />
-          </TabsContent>
-        </Tabs>
+          </div>
       </main>
     </div>
   );
