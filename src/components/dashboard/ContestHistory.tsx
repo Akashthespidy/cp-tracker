@@ -1,60 +1,55 @@
 'use client';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ContestResult } from '@/lib/mockdata';
-import clsx from 'clsx';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ContestHistoryProps {
   contests: ContestResult[];
 }
 
 export function ContestHistory({ contests }: ContestHistoryProps) {
+  if (!contests || contests.length === 0) return null;
+
   return (
-    <Card className="col-span-12 xl:col-span-8 overflow-hidden">
-      <CardHeader>
-        <CardTitle>Recent Contests</CardTitle>
+    <Card className="border-border/50">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Recent Contests</CardTitle>
+        <CardDescription>Last {contests.length} rated contests</CardDescription>
       </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">Contest</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Rank</TableHead>
-              <TableHead>Change</TableHead>
-              <TableHead className="text-right">New Rating</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {contests.map((contest, i) => (
-              <TableRow key={i}>
-                <TableCell className="font-medium">{contest.contestName}</TableCell>
-                <TableCell>{contest.date}</TableCell>
-                <TableCell>{contest.rank}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={contest.ratingChange > 0 ? 'secondary' : 'destructive'}
-                    className={clsx(
-                      contest.ratingChange > 0 ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-red-500/10 text-red-500 border-red-500/20"
-                    )}
-                  >
-                    {contest.ratingChange > 0 ? `+${contest.ratingChange}` : contest.ratingChange}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">{contest.newRating}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <CardContent className="p-0">
+        <ScrollArea className="h-[220px]">
+          <div className="divide-y divide-border/30">
+            {contests.map((contest, i) => {
+              const isUp = contest.ratingChange > 0;
+              const isDown = contest.ratingChange < 0;
+              return (
+                <div key={i} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/30 transition-colors">
+                  {/* Change icon */}
+                  <div className={`shrink-0 ${isUp ? 'text-emerald-400' : isDown ? 'text-red-400' : 'text-muted-foreground'}`}>
+                    {isUp ? <TrendingUp className="h-4 w-4" /> : isDown ? <TrendingDown className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
+                  </div>
+
+                  {/* Contest name */}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{contest.contestName}</div>
+                    <div className="text-xs text-muted-foreground">{contest.date} · Rank #{contest.rank}</div>
+                  </div>
+
+                  {/* Rating change */}
+                  <div className="text-right shrink-0">
+                    <div className={`text-sm font-bold ${isUp ? 'text-emerald-400' : isDown ? 'text-red-400' : 'text-muted-foreground'}`}>
+                      {isUp ? '+' : ''}{contest.ratingChange}
+                    </div>
+                    <div className="text-xs text-muted-foreground">{contest.newRating}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
