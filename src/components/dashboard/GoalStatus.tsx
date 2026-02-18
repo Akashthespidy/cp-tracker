@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,11 @@ interface GoalStatusProps {
 export function GoalStatus({ currentRating, initialGoal, recommendations }: GoalStatusProps) {
   const [goal, setGoal] = useState(initialGoal);
   const [displayedGoal, setDisplayedGoal] = useState(initialGoal);
+
+  useEffect(() => {
+    setGoal(initialGoal);
+    setDisplayedGoal(initialGoal);
+  }, [initialGoal]);
 
   const progress = Math.min(100, (currentRating / displayedGoal) * 100);
 
