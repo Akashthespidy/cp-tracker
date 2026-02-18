@@ -11,6 +11,7 @@ import { RatingChart } from '@/components/dashboard/RatingChart';
 import { ProblemDistribution } from '@/components/dashboard/ProblemDistribution';
 import { ContestHistory } from '@/components/dashboard/ContestHistory';
 import { GoalStatus } from '@/components/dashboard/GoalStatus';
+import { CoachView } from '@/components/dashboard/CoachView';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 
@@ -211,6 +212,13 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
                 recommendations={recommendations}
              />
         </div>
+
+        {/* AI Coach Section - Only for Codeforces currently */}
+        {platform === 'Codeforces' && (
+          <div className="col-span-12">
+            <CoachView handle={handle} currentRating={profile.rating} />
+          </div>
+        )}
       </div>
     </motion.div>
   );
