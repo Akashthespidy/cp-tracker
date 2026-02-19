@@ -76,7 +76,9 @@ export function CFProfileHeader({
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{rating}</span>
                 <span className="font-medium" style={{ color: nextRank.color }}>
-                  → {nextRank.rank} ({nextRank.target})
+                  {nextRank.target === rating
+                    ? '✦ Peak Rating Achieved'
+                    : `→ ${nextRank.rank} (${nextRank.target})`}
                 </span>
               </div>
               <div className="h-1.5 bg-muted rounded-full overflow-hidden">

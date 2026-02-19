@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -130,6 +130,12 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
     }
   };
 
+  // ── Auto-fetch on mount when username is already known ────────────────────
+  useEffect(() => {
+    if (username) fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
+
   // ── Empty (prompt to load) ─────────────────────────────────────────────────
   if (!userData && !loading) {
     return (
@@ -235,7 +241,7 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
             <CardDescription>Accepted solutions by level</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[200px]">
+            <div style={{ width: '100%', height: 200 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -269,7 +275,7 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
             <CardDescription>Most solved topics across tiers</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[240px]">
+            <div style={{ width: '100%', height: 240 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={allTagsForChart} layout="vertical" margin={{ left: 0, right: 36 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.1} />

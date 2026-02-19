@@ -52,7 +52,8 @@ export function ProblemDistribution({ data, type = 'bar', totalOverride }: Probl
         </div>
       </CardHeader>
       <CardContent className="pl-2 pt-0">
-        <ResponsiveContainer width="100%" height={220}>
+        <div style={{ width: '100%', height: 220 }}>
+          <ResponsiveContainer width="100%" height={220}>
           {type === 'pie' ? (
             <PieChart>
               <Pie
@@ -118,6 +119,7 @@ export function ProblemDistribution({ data, type = 'bar', totalOverride }: Probl
             </BarChart>
           )}
         </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );

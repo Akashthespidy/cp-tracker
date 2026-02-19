@@ -55,7 +55,8 @@ function getNextRank(rating: number): { rank: string; target: number; color: str
   if (rating < 2300) return { rank: 'International Master',     target: 2300, color: '#ff8c00' };
   if (rating < 2400) return { rank: 'Grandmaster',              target: 2400, color: '#ff0000' };
   if (rating < 2600) return { rank: 'International Grandmaster',target: 2600, color: '#ff0000' };
-  return { rank: 'Legendary Grandmaster', target: 3000, color: '#ff0000' };
+  // Already Legendary Grandmaster — peaked
+  return { rank: '✦ Legendary Grandmaster',                     target: rating, color: '#ff0000' };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -203,11 +204,13 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
     );
   }
 
-  const rankColor     = getRankColor(profile.rank);
-  const nextRank      = getNextRank(profile.rating);
-  const progressToNext = Math.min(100, Math.round(
-    ((profile.rating - (nextRank.target - 200)) / 200) * 100
-  ));
+  const rankColor      = getRankColor(profile.rank);
+  const nextRank       = getNextRank(profile.rating);
+  // If target == current rating, user is at max rank — show full bar
+  const isMaxRank      = nextRank.target === profile.rating;
+  const progressToNext = isMaxRank
+    ? 100
+    : Math.min(100, Math.round(((profile.rating - (nextRank.target - 200)) / 200) * 100));
 
   return (
     <motion.div
