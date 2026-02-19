@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAtom } from 'jotai';
+import { leetcodeDataAtom, leetcodeDataUsernameAtom } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -81,20 +83,51 @@ const TOOLTIP_STYLE = {
   fontSize: '12px',
 };
 
+const TOOLTIP_ITEM_STYLE  = { color: '#fff' };
+const TOOLTIP_LABEL_STYLE = { color: '#aaa' };
+
 const TIER_COLORS: Record<string, string> = {
   fundamental:  '#3b82f6',
   intermediate: '#f59e0b',
   advanced:     '#ef4444',
 };
 
+// ── Custom pie label (positions text outside slices so all labels are visible) ─
+function renderPieLabel({ cx, cy, midAngle, outerRadius, value }: any) {
+  if (!value) return null;
+  const RADIAN = Math.PI / 180;
+  const radius = outerRadius + 22;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="#ccc"
+      textAnchor={x > cx ? 'start' : 'end'}
+      dominantBaseline="central"
+      fontSize={11}
+      fontWeight={600}
+    >
+      {value}
+    </text>
+  );
+}
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
-  const [userData,     setUserData]     = useState<UserData | null>(null);
+  // Global cache — survives tab switches
+  const [cachedData,         setCachedData]         = useAtom(leetcodeDataAtom);
+  const [cachedUsername,     setCachedUsername]     = useAtom(leetcodeDataUsernameAtom);
+
   const [coachData,    setCoachData]    = useState<CoachData | null>(null);
   const [loading,      setLoading]      = useState(false);
   const [coachLoading, setCoachLoading] = useState(false);
   const [error,        setError]        = useState<string | null>(null);
   const [coachError,   setCoachError]   = useState<string | null>(null);
+
+  // Use cached data if it's for the same username, otherwise null
+  const userData: UserData | null = cachedUsername === username ? cachedData : null;
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -103,7 +136,8 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
       const res  = await fetch(`/api/leetcode?username=${username}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      setUserData(data);
+      setCachedData(data);
+      setCachedUsername(username);
     } catch (e: any) {
       setError(e.message || 'Failed to load LeetCode profile');
     } finally {
@@ -130,9 +164,9 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
     }
   };
 
-  // ── Auto-fetch on mount when username is already known ────────────────────
+  // ── Auto-fetch: only if no cached data for this username ────────────────────
   useEffect(() => {
-    if (username) fetchProfile();
+    if (username && cachedUsername !== username) fetchProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
@@ -241,23 +275,28 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
             <CardDescription>Accepted solutions by level</CardDescription>
           </CardHeader>
           <CardContent>
-            <div style={{ width: '100%', height: 200 }}>
+            <div style={{ width: '100%', height: 220 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
                   <Pie
                     data={pieData}
-                    cx="50%" cy="50%"
-                    innerRadius={58} outerRadius={80}
+                    cx="50%" cy="44%"
+                    innerRadius={52} outerRadius={72}
                     paddingAngle={4}
                     dataKey="value"
-                    label={({ value }) => value}
+                    label={renderPieLabel}
                     labelLine={false}
                   >
                     {pieData.map((entry, i) => (
                       <Cell key={i} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: any, n: any) => [`${v} solved`, n]} />
+                  <Tooltip
+                    contentStyle={TOOLTIP_STYLE}
+                    itemStyle={TOOLTIP_ITEM_STYLE}
+                    labelStyle={TOOLTIP_LABEL_STYLE}
+                    formatter={(v: any, n: any) => [`${v} solved`, n]}
+                  />
                   <Legend iconSize={10} />
                 </PieChart>
               </ResponsiveContainer>
@@ -287,6 +326,8 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
                   />
                   <Tooltip
                     contentStyle={TOOLTIP_STYLE}
+                    itemStyle={TOOLTIP_ITEM_STYLE}
+                    labelStyle={TOOLTIP_LABEL_STYLE}
                     formatter={(v: any) => [`${v} solved`, 'Problems']}
                   />
                   <Bar dataKey="problemsSolved" radius={[0, 6, 6, 0]} barSize={14}>
