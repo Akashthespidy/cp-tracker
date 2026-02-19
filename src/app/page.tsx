@@ -5,12 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { PlatformDashboard } from '@/components/dashboard/PlatformDashboard';
 import { Navbar } from '@/components/Navbar';
-import { Activity, Code, ArrowRight, Zap, Target, TrendingUp, Brain, ChevronRight } from 'lucide-react';
+import { Activity, Code, ArrowRight, Zap, Target, TrendingUp, Brain, ChevronRight, Code2 } from 'lucide-react';
 import { useAtom } from 'jotai';
 import { handleAtom } from '@/lib/store';
+import Link from 'next/link';
 
 export default function Home() {
   const [handle, setHandle] = useAtom(handleAtom);
@@ -135,30 +136,35 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
-      <main className="container mx-auto px-4 py-8">
-        <Tabs defaultValue="Codeforces" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">Your competitive programming overview</p>
-            </div>
-            <TabsList className="bg-muted/50">
-              <TabsTrigger value="Codeforces" className="gap-2">
-                <Code className="h-3.5 w-3.5" /> Codeforces
-              </TabsTrigger>
-              <TabsTrigger value="LeetCode" disabled className="gap-2 opacity-40">
-                <Code className="h-3.5 w-3.5" /> LeetCode
-              </TabsTrigger>
-              <TabsTrigger value="AtCoder" disabled className="gap-2 opacity-40">
-                <Activity className="h-3.5 w-3.5" /> AtCoder
-              </TabsTrigger>
-            </TabsList>
-          </div>
+      <main className="container mx-auto px-4 py-8 space-y-8">
+        {/* Dashboard header */}
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Your competitive programming overview</p>
+        </div>
 
-          <TabsContent value="Codeforces">
-            <PlatformDashboard platform="Codeforces" handle={handle} />
-          </TabsContent>
-        </Tabs>
+        {/* Codeforces */}
+        <PlatformDashboard platform="Codeforces" handle={handle} />
+
+        {/* LeetCode CTA banner */}
+        <Link href="/leetcode" className="block group">
+          <Card className="border-amber-500/20 bg-gradient-to-r from-amber-500/5 to-transparent hover:border-amber-500/40 hover:from-amber-500/10 transition-all">
+            <CardContent className="p-5 flex items-center gap-5">
+              <div className="p-3 bg-amber-500/10 rounded-xl group-hover:bg-amber-500/20 transition-colors">
+                <Code2 className="h-7 w-7 text-amber-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-base group-hover:text-amber-400 transition-colors">
+                  LeetCode Dashboard
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Track Easy / Medium / Hard solved, topic mastery rings, and get a 30-day AI study plan.
+                </p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
+            </CardContent>
+          </Card>
+        </Link>
       </main>
     </div>
   );

@@ -1,15 +1,39 @@
 'use client';
 
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell, PieChart, Pie, Legend } from 'recharts';
+import {
+  Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip,
+  Cell, PieChart, Pie, Legend, LabelList,
+} from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 interface ProblemStatsProps {
   data: { difficulty: string; count: number; color: string }[];
   type?: 'bar' | 'pie';
+  /** If provided, overrides the sum of bars as the displayed total (e.g. to include unrated) */
+  totalOverride?: number;
 }
 
-export function ProblemDistribution({ data, type = 'bar' }: ProblemStatsProps) {
-  const total = data.reduce((sum, d) => sum + d.count, 0);
+// Custom label rendered on top of each bar
+function BarLabel(props: any) {
+  const { x, y, width, value } = props;
+  if (!value) return null;
+  return (
+    <text
+      x={x + width / 2}
+      y={y - 5}
+      fill="#aaa"
+      fontSize={10}
+      fontWeight={600}
+      textAnchor="middle"
+    >
+      {value}
+    </text>
+  );
+}
+
+export function ProblemDistribution({ data, type = 'bar', totalOverride }: ProblemStatsProps) {
+  const ratedTotal = data.reduce((sum, d) => sum + d.count, 0);
+  const displayTotal = totalOverride ?? ratedTotal;
 
   return (
     <Card className="border-border/50">
@@ -20,8 +44,10 @@ export function ProblemDistribution({ data, type = 'bar' }: ProblemStatsProps) {
             <CardDescription>By difficulty rating</CardDescription>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-primary">{total}</div>
-            <div className="text-xs text-muted-foreground">total</div>
+            <div className="text-2xl font-bold text-primary">{displayTotal}</div>
+            <div className="text-xs text-muted-foreground">
+              total {totalOverride && totalOverride > ratedTotal ? `(${ratedTotal} rated)` : ''}
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -38,6 +64,8 @@ export function ProblemDistribution({ data, type = 'bar' }: ProblemStatsProps) {
                 paddingAngle={4}
                 dataKey="count"
                 nameKey="difficulty"
+                label={({ name, value }) => `${value}`}
+                labelLine={false}
               >
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
@@ -55,7 +83,7 @@ export function ProblemDistribution({ data, type = 'bar' }: ProblemStatsProps) {
               <Legend verticalAlign="bottom" height={36} iconSize={10} />
             </PieChart>
           ) : (
-            <BarChart data={data} margin={{ top: 20, right: 10, bottom: 0, left: 0 }}>
+            <BarChart data={data} margin={{ top: 24, right: 10, bottom: 0, left: 0 }}>
               <XAxis
                 dataKey="difficulty"
                 stroke="#555"
@@ -81,10 +109,11 @@ export function ProblemDistribution({ data, type = 'bar' }: ProblemStatsProps) {
                 cursor={{ fill: 'rgba(255,255,255,0.03)' }}
                 formatter={(val: any) => [`${val} solved`, 'Count']}
               />
-              <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={50}>
+              <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={50}>
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} opacity={0.85} />
                 ))}
+                <LabelList dataKey="count" content={<BarLabel />} />
               </Bar>
             </BarChart>
           )}
