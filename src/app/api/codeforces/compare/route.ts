@@ -18,18 +18,28 @@ function getBucket(r: number): RatingBucket {
   return '1901+';
 }
 
+export interface SolvedProblem {
+  name: string;
+  contestId: number;
+  index: string;
+  rating: number | null;
+  url: string;
+}
+
 interface ProcessedHandle {
   info: {
-    handle: string;
-    rating: number;
+    handle:    string;
+    rating:    number;
     maxRating: number;
-    rank: string;
-    avatar: string;
+    rank:      string;
+    avatar:    string;
   };
   ratingBuckets: Record<RatingBucket, number>;
-  tagCounts: Record<string, number>;
-  totalSolved: number;
-  contestCount: number;
+  tagCounts:     Record<string, number>;
+  /** tag → solved problems, sorted by rating asc */
+  tagProblems:   Record<string, SolvedProblem[]>;
+  totalSolved:   number;
+  contestCount:  number;
 }
 
 async function fetchAndProcess(handle: string): Promise<ProcessedHandle> {
@@ -55,7 +65,8 @@ async function fetchAndProcess(handle: string): Promise<ProcessedHandle> {
     '≤800': 0, '801–1000': 0, '1001–1200': 0, '1201–1400': 0,
     '1401–1600': 0, '1601–1900': 0, '1901+': 0,
   };
-  const tagMap: Record<string, number> = {};
+  const tagMap:      Record<string, number>         = {};
+  const tagProblems: Record<string, SolvedProblem[]> = {};
   const solved = new Set<string>();
 
   if (statusData.status === 'OK') {
@@ -67,9 +78,29 @@ async function fetchAndProcess(handle: string): Promise<ProcessedHandle> {
 
       if (sub.problem.rating) buckets[getBucket(sub.problem.rating)]++;
 
+      const prob: SolvedProblem = {
+        name:      sub.problem.name,
+        contestId: sub.problem.contestId,
+        index:     sub.problem.index,
+        rating:    sub.problem.rating ?? null,
+        url: `https://codeforces.com/problemset/problem/${sub.problem.contestId}/${sub.problem.index}`,
+      };
+
       for (const tag of sub.problem.tags ?? []) {
         tagMap[tag] = (tagMap[tag] ?? 0) + 1;
+        if (!tagProblems[tag]) tagProblems[tag] = [];
+        tagProblems[tag].push(prob);
       }
+    }
+
+    // Sort each tag's problem list by rating asc (unrated problems go last)
+    for (const tag of Object.keys(tagProblems)) {
+      tagProblems[tag].sort((a, b) => {
+        if (a.rating === null && b.rating === null) return 0;
+        if (a.rating === null) return 1;
+        if (b.rating === null) return -1;
+        return a.rating - b.rating;
+      });
     }
   }
 
@@ -78,15 +109,16 @@ async function fetchAndProcess(handle: string): Promise<ProcessedHandle> {
       handle:    info.handle,
       rating:    info.rating    ?? 0,
       maxRating: info.maxRating ?? 0,
-      rank:      info.rank
+      rank: info.rank
         ? info.rank.charAt(0).toUpperCase() + info.rank.slice(1)
         : 'Unrated',
       avatar: info.titlePhoto ?? '',
     },
     ratingBuckets: buckets,
-    tagCounts: tagMap,
-    totalSolved: solved.size,
-    contestCount: ratingData.status === 'OK' ? ratingData.result.length : 0,
+    tagCounts:     tagMap,
+    tagProblems,
+    totalSolved:   solved.size,
+    contestCount:  ratingData.status === 'OK' ? ratingData.result.length : 0,
   };
 
   cache.set(handle, { data: result, ts: Date.now() });

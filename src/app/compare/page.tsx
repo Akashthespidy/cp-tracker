@@ -1,7 +1,7 @@
 'use client';
 
 import { Navbar } from '@/components/Navbar';
-import { CFCompare } from '@/components/dashboard/cf/CFCompare';
+import {CFCompare} from '@/components/dashboard/cf/CFCompare';
 
 export default function ComparePage() {
   return (

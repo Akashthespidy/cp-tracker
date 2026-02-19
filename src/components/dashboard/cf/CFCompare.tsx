@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Swords, CheckCircle2, Search,
+  Swords, CheckCircle2, Search, ExternalLink,
   RefreshCw, Trophy, Zap, BarChart2, Tag, ArrowUp, ArrowDown, Minus,
 } from 'lucide-react';
 
@@ -52,6 +52,14 @@ const TOOLTIP_ITEM  = { color: '#fff' };
 const TOOLTIP_LABEL = { color: '#aaa' };
 
 // ── Types ──────────────────────────────────────────────────────────────────────
+interface SolvedProblem {
+  name:      string;
+  contestId: number;
+  index:     string;
+  rating:    number | null;
+  url:       string;
+}
+
 interface HandleData {
   info: {
     handle: string;
@@ -61,9 +69,10 @@ interface HandleData {
     avatar: string;
   };
   ratingBuckets: Record<string, number>;
-  tagCounts: Record<string, number>;
-  totalSolved: number;
-  contestCount: number;
+  tagCounts:     Record<string, number>;
+  tagProblems:   Record<string, SolvedProblem[]>;
+  totalSolved:   number;
+  contestCount:  number;
 }
 
 interface CompareResult {
@@ -531,24 +540,28 @@ export function CFCompare() {
                 </CardHeader>
                 <CardContent>
                   {activeTag ? (
-                    /* Single-tag big duel card */
+                    /* Single-tag: duel stat cards + problem lists */
                     <motion.div
-                      initial={{ opacity: 0, scale: 0.97 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="mt-2"
+                      key={activeTag}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-2 space-y-4"
                     >
+                      {/* Duel count cards */}
                       <div className="grid grid-cols-2 gap-4">
                         {[
                           { handle: data.a.info.handle, val: data.a.tagCounts[activeTag] ?? 0, color: COLOR_A },
                           { handle: data.b.info.handle, val: data.b.tagCounts[activeTag] ?? 0, color: COLOR_B },
                         ].map(({ handle, val, color }, idx) => {
-                          const other = idx === 0 ? (data.b.tagCounts[activeTag] ?? 0) : (data.a.tagCounts[activeTag] ?? 0);
+                          const other = idx === 0
+                            ? (data.b.tagCounts[activeTag!] ?? 0)
+                            : (data.a.tagCounts[activeTag!] ?? 0);
                           const isWinner = val > other;
                           const pct = val + other === 0 ? 50 : Math.round((val / (val + other)) * 100);
                           return (
                             <div
                               key={handle}
-                              className="relative p-5 rounded-xl border overflow-hidden text-center space-y-3"
+                              className="relative p-4 rounded-xl border overflow-hidden text-center space-y-2"
                               style={{ borderColor: `${color}30`, background: `${color}08` }}
                             >
                               {isWinner && (
@@ -557,15 +570,81 @@ export function CFCompare() {
                                 </div>
                               )}
                               <div className="text-sm font-bold truncate" style={{ color }}>{handle}</div>
-                              <div className="text-5xl font-extrabold tabular-nums" style={{ color }}>{val}</div>
-                              <div className="text-xs text-muted-foreground capitalize">{activeTag} problems</div>
-                              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                              <div className="text-4xl font-extrabold tabular-nums" style={{ color }}>{val}</div>
+                              <div className="text-xs text-muted-foreground capitalize">{activeTag} solved</div>
+                              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                                 <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: color }} />
                               </div>
-                              <div className="text-xs text-muted-foreground">{pct}% of solved in this tag</div>
+                              <div className="text-xs text-muted-foreground">{pct}%</div>
                             </div>
                           );
                         })}
+                      </div>
+
+                      {/* Problem lists — side by side */}
+                      <div className="grid grid-cols-2 gap-4">
+                        {[
+                          { handle: data.a.info.handle, problems: data.a.tagProblems[activeTag!] ?? [], color: COLOR_A },
+                          { handle: data.b.info.handle, problems: data.b.tagProblems[activeTag!] ?? [], color: COLOR_B },
+                        ].map(({ handle, problems, color }) => (
+                          <div key={handle} className="rounded-xl border overflow-hidden" style={{ borderColor: `${color}20` }}>
+                            {/* List header */}
+                            <div
+                              className="px-3 py-2 flex items-center gap-2 border-b"
+                              style={{ borderColor: `${color}20`, background: `${color}0a` }}
+                            >
+                              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+                              <span className="text-xs font-semibold truncate" style={{ color }}>{handle}</span>
+                              <span className="ml-auto text-[10px] text-muted-foreground shrink-0">
+                                {problems.length} problem{problems.length !== 1 ? 's' : ''}
+                              </span>
+                            </div>
+
+                            {/* Scrollable rows */}
+                            <div className="overflow-y-auto max-h-64 divide-y divide-border/20">
+                              {problems.length === 0 ? (
+                                <div className="px-3 py-6 text-center text-xs text-muted-foreground">None solved yet</div>
+                              ) : (
+                                problems.map((p: SolvedProblem) => (
+                                  <a
+                                    key={`${p.contestId}-${p.index}`}
+                                    href={p.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 px-3 py-2 hover:bg-muted/30 transition-colors group"
+                                  >
+                                    {/* Rating badge */}
+                                    <span
+                                      className="text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 tabular-nums"
+                                      style={{
+                                        background: p.rating
+                                          ? p.rating <= 1200 ? '#22c55e20'
+                                          : p.rating <= 1800 ? '#f59e0b20'
+                                          : '#ef444420'
+                                          : '#88888820',
+                                        color: p.rating
+                                          ? p.rating <= 1200 ? '#22c55e'
+                                          : p.rating <= 1800 ? '#f59e0b'
+                                          : '#ef4444'
+                                          : '#888',
+                                      }}
+                                    >
+                                      {p.rating ?? '?'}
+                                    </span>
+
+                                    {/* Problem name */}
+                                    <span className="text-xs truncate flex-1 group-hover:text-primary transition-colors">
+                                      {p.name}
+                                    </span>
+
+                                    {/* External link icon */}
+                                    <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0 transition-opacity" />
+                                  </a>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </motion.div>
                   ) : (
