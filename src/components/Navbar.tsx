@@ -5,7 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAtom } from 'jotai';
 import { handleAtom } from '@/lib/store';
 import { Button } from '@/components/ui/button';
-import { Activity, LayoutGrid, ListTodo, User, LogOut, Brain } from 'lucide-react';
+import { Activity, LayoutGrid, ListTodo, User, LogOut, Brain, Code2 } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 
 export function Navbar() {
@@ -19,7 +20,8 @@ export function Navbar() {
   };
 
   const navLinks = [
-    { href: '/', label: 'Dashboard', icon: LayoutGrid },
+    { href: '/', label: 'Codeforces', icon: LayoutGrid },
+    { href: '/leetcode', label: 'LeetCode', icon: Code2 },
     { href: '/practice', label: 'Practice', icon: ListTodo },
   ];
 
