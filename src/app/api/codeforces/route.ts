@@ -30,7 +30,8 @@ export async function GET(request: Request) {
     // Codeforces user.status can be heavy. Let's try fetching with count first or just handle it.
     // Fetching 500 should be enough for "recent" stats, but for "total solved" we need more.
     // For now, let's fetch up to 1000.
-    const statusRes = await fetch(`https://codeforces.com/api/user.status?handle=${handle}&from=1&count=1000`);
+    // Fetching up to 10000 to ensure we capture all solved problems for most users.
+    const statusRes = await fetch(`https://codeforces.com/api/user.status?handle=${handle}&from=1&count=10000`);
     const statusData = await statusRes.json();
 
     return NextResponse.json({
