@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 
 // ── In-memory cache (per handle) ──────────────────────────────────────────────
-const cache = new Map<string, { data: ProcessedHandle; ts: number }>();
+// Bump CACHE_VERSION whenever the ProcessedHandle shape changes to auto-bust
+// any live in-memory entries that don't match the current schema.
+const CACHE_VERSION = 2;
+const cache = new Map<string, { data: ProcessedHandle; ts: number; v: number }>();
 const CACHE_TTL = 1000 * 60 * 20; // 20 min
 
 // ── Rating buckets ─────────────────────────────────────────────────────────────
@@ -44,7 +47,15 @@ interface ProcessedHandle {
 
 async function fetchAndProcess(handle: string): Promise<ProcessedHandle> {
   const cached = cache.get(handle);
-  if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data;
+  // Valid only when: not expired AND matches the current schema version
+  if (
+    cached &&
+    cached.v === CACHE_VERSION &&
+    Date.now() - cached.ts < CACHE_TTL &&
+    cached.data.tagProblems // extra guard: ensure this field exists
+  ) {
+    return cached.data;
+  }
 
   const [infoRes, ratingRes, statusRes] = await Promise.all([
     fetch(`https://codeforces.com/api/user.info?handles=${handle}`),
@@ -121,7 +132,7 @@ async function fetchAndProcess(handle: string): Promise<ProcessedHandle> {
     contestCount:  ratingData.status === 'OK' ? ratingData.result.length : 0,
   };
 
-  cache.set(handle, { data: result, ts: Date.now() });
+  cache.set(handle, { data: result, ts: Date.now(), v: CACHE_VERSION });
   return result;
 }
 

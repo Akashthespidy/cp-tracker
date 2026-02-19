@@ -584,8 +584,8 @@ export function CFCompare() {
                       {/* Problem lists — side by side */}
                       <div className="grid grid-cols-2 gap-4">
                         {[
-                          { handle: data.a.info.handle, problems: data.a.tagProblems[activeTag!] ?? [], color: COLOR_A },
-                          { handle: data.b.info.handle, problems: data.b.tagProblems[activeTag!] ?? [], color: COLOR_B },
+                          { handle: data.a.info.handle, problems: data.a.tagProblems?.[activeTag!] ?? [], color: COLOR_A },
+                          { handle: data.b.info.handle, problems: data.b.tagProblems?.[activeTag!] ?? [], color: COLOR_B },
                         ].map(({ handle, problems, color }) => (
                           <div key={handle} className="rounded-xl border overflow-hidden" style={{ borderColor: `${color}20` }}>
                             {/* List header */}
