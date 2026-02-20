@@ -275,8 +275,8 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
             <CardDescription>Accepted solutions by level</CardDescription>
           </CardHeader>
           <CardContent>
-            <div style={{ width: '100%', height: 220 }}>
-              <ResponsiveContainer width="100%" height="100%">
+            <div style={{ width: '100%', height: 220, minWidth: 1, minHeight: 1 }}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <PieChart margin={{ top: 10, right: 20, bottom: 10, left: 20 }}>
                   <Pie
                     data={pieData}
@@ -314,8 +314,8 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
             <CardDescription>Most solved topics across tiers</CardDescription>
           </CardHeader>
           <CardContent>
-            <div style={{ width: '100%', height: 240 }}>
-              <ResponsiveContainer width="100%" height="100%">
+            <div style={{ width: '100%', height: 240, minWidth: 1, minHeight: 1 }}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <BarChart data={allTagsForChart} layout="vertical" margin={{ left: 0, right: 36 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.1} />
                   <XAxis type="number" hide />

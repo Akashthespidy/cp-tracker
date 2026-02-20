@@ -385,8 +385,8 @@ export function CFCompare() {
                     </span>
                   ))}
                 </div>
-                <div style={{ width: '100%', height: 280 }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                <div style={{ width: '100%', height: 280, minWidth: 1, minHeight: 1 }}>
+                  <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                     <BarChart data={bucketData} margin={{ top: 16, right: 10, bottom: 0, left: 0 }} barGap={3}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.08} />
                       <XAxis dataKey="bucket" stroke="#555" fontSize={11} tickLine={false} axisLine={false} />

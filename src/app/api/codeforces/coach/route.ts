@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || "dummy",
 });
 
 interface CfProblem {
@@ -145,7 +145,7 @@ export async function POST(request: Request) {
     // 6. AI Advice Generation
     let aiAdvice = "";
 
-    if (process.env.OPENAI_API_KEY) {
+    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== "dummy") {
       try {
         const prompt = `You are a world-class competitive programming coach for Codeforces. You MUST speak directly to the athlete using "you" and "your" — never third person.
 

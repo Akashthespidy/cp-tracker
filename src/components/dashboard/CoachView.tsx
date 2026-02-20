@@ -352,8 +352,8 @@ export function CoachView({ handle, currentRating, goalRating }: CoachViewProps)
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[280px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-[280px] w-full" style={{ minWidth: 1, minHeight: 1 }}>
+              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 30 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.15} />
                   <XAxis type="number" hide />

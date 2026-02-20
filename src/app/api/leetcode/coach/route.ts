@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || "dummy",
 });
 
 interface SubmissionStat { difficulty: string; count: number; }
@@ -113,7 +113,8 @@ export async function POST(req: Request) {
 
     // Generate AI advice — always use the key, fall back to static if API fails
     let aiAdvice = "";
-    try {
+    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== "dummy") {
+      try {
       const prompt = `You are a world-class LeetCode performance coach. You MUST speak directly to the user using "you" and "your" — never third person.
 
 USER PROFILE:
@@ -168,6 +169,14 @@ Keep under 280 words. Be direct and motivating like a real coach.`;
       aiAdvice = completion.choices[0].message.content || "";
     } catch (err: unknown) {
       console.error("OpenAI error:", err instanceof Error ? err.message : err);
+        aiAdvice = generateFallbackAdvice(
+          username, easyCount, mediumCount, hardCount,
+          weakTags, strongTags, tagMap,
+          contestRating, attendedContests,
+          targetMedium, targetHard, userLevel
+        );
+      }
+    } else {
       aiAdvice = generateFallbackAdvice(
         username, easyCount, mediumCount, hardCount,
         weakTags, strongTags, tagMap,
