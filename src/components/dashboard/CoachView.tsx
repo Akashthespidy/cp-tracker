@@ -131,40 +131,55 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-blue-500/10 to-transparent border-blue-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                <Target className="h-3.5 w-3.5 text-blue-400" /> Next Milestone
-              </div>
-              <div className="text-3xl font-extrabold text-blue-400">{currentRating + 200}</div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Target — <span className="text-blue-400 font-medium">{data.targetTier}</span>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Card className="bg-gradient-to-br from-blue-500/10 to-transparent border-blue-500/20">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                  <Target className="h-3.5 w-3.5 text-blue-400" /> Next Milestone
+                </div>
+                <div className="text-3xl font-extrabold text-blue-400">{currentRating + 200}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Target — <span className="text-blue-400 font-medium">{data.targetTier}</span>
+                </div>
+              </CardContent>
+            </Card>
 
+            <Card className="bg-gradient-to-br from-emerald-500/10 to-transparent border-emerald-500/20">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                  <Medal className="h-3.5 w-3.5 text-emerald-400" /> Current Tier
+                </div>
+                <div className="text-xl font-bold text-emerald-400 leading-tight">{data.currentTier}</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Peak: <span className="font-medium text-foreground">{data.maxRating}</span> · {data.totalSolved} solved
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* All weak topics — full width */}
           <Card className="bg-gradient-to-br from-red-500/10 to-transparent border-red-500/20">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                <AlertTriangle className="h-3.5 w-3.5 text-red-400" /> Weakest Topic
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                <AlertTriangle className="h-3.5 w-3.5 text-red-400" /> Weak Topics — Focus Here
               </div>
-              <div className="text-xl font-bold text-red-400 capitalize leading-tight">
-                {data.weakTags[0] || '—'}
+              <div className="flex flex-wrap gap-2">
+                {data.weakTags.map((tag, i) => (
+                  <a
+                    key={tag}
+                    href={`https://codeforces.com/problemset?tags=${encodeURIComponent(tag)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer capitalize">
+                      <span className="text-[10px] font-bold opacity-50">#{i + 1}</span>
+                      {tag}
+                    </span>
+                  </a>
+                ))}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">Focus here first</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-emerald-500/10 to-transparent border-emerald-500/20">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                <Medal className="h-3.5 w-3.5 text-emerald-400" /> Current Tier
-              </div>
-              <div className="text-xl font-bold text-emerald-400 leading-tight">{data.currentTier}</div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Peak: <span className="font-medium text-foreground">{data.maxRating}</span> · {data.totalSolved} solved
-              </div>
+              <div className="text-xs text-muted-foreground mt-2">Tap any topic to find practice problems on Codeforces</div>
             </CardContent>
           </Card>
         </div>

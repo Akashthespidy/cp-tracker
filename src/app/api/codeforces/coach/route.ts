@@ -114,17 +114,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. Identify Weaknesses & Strengths
+    // 4. Identify weak tags (server-side, used for UI coloring & recommendations)
     const weakTags = COMMON_TAGS
       .map(tag => ({ tag, count: tagCounts[tag] || 0 }))
       .sort((a, b) => a.count - b.count)
       .slice(0, 5)
       .map(t => t.tag);
 
-    const strongTags = Object.entries(tagCounts)
+    // Full tag table sorted by solved count — passed raw to AI for its own analysis
+    const fullTagTable = Object.entries(tagCounts)
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 3)
-      .map(([tag]) => tag);
+      .map(([tag, count]) => `${tag}: ${count} solved`)
+      .join('\n');
 
     // 5. Recommendations
     const recommendations = problemsetCache
@@ -146,7 +147,7 @@ export async function POST(request: Request) {
 
     if (process.env.OPENAI_API_KEY) {
       try {
-        const prompt = `You are a world-class competitive programming coach, like a personal trainer for Codeforces athletes. You MUST speak directly to the athlete (user), using "you" and "your" — never refer to them in the third person.
+        const prompt = `You are a world-class competitive programming coach for Codeforces. You MUST speak directly to the athlete using "you" and "your" — never third person.
 
 USER PROFILE:
 - Handle: ${handle}
@@ -154,31 +155,34 @@ USER PROFILE:
 - Peak Rating: ${maxRating}
 - Target Rating: ${targetRating} (${targetTier})
 - Total Problems Solved: ${totalSolved}
-- Strongest Topics: ${strongTags.join(", ")}
-- Weakest Topics (fewest solved): ${weakTags.map(t => `${t} (${tagCounts[t] || 0} solved)`).join(", ")}
 
-RECOMMENDED PROBLEMS TO TACKLE:
+FULL TOPIC BREAKDOWN (all topics the user has solved, sorted by count):
+${fullTagTable}
+
+RECOMMENDED PROBLEMS (unsolved, within their rating range):
 ${recommendations.map((p: CfProblem) => `- ${p.name} [${p.rating}] — tags: ${p.tags.join(", ")}`).join("\n")}
 
-Write a direct, personal, and motivating coaching report. Format it EXACTLY like this:
+Based on the above raw data, YOU decide which topics are weak given their current rating (${currentRating}) and target rating (${targetRating}). A topic is weak if the user has solved too few problems in it relative to what someone at ${targetRating} typically needs. Do NOT just pick the lowest count — consider what topics are most critical at the ${currentRating}–${targetRating} rating range.
+
+Write a direct, personal coaching report formatted EXACTLY like this:
 
 🎯 WHERE YOU STAND
-[2–3 sentences giving an honest, direct assessment. Mention their rank tier, strengths, and the gap to the target tier. Be encouraging but realistic.]
+[2–3 sentences: honest tier assessment, note what they're good at from the data, what gap exists to reach ${targetTier}.]
 
 ⚠️ YOUR CRITICAL WEAK SPOTS
-[Mention the top 2–3 weak tags by name and WHY each one matters specifically for CF contests. Be specific — e.g., "You've only solved X dp problems — this will cap your rating at Expert level."]
+[From your analysis of the topic table, name the 2–3 topics most important to fix at this rating range. Explain WHY each one is critical for CF contests at ${currentRating}–${targetRating}. Mention their actual solved count from the data.]
 
 📅 YOUR 30-DAY BATTLE PLAN
-Week 1–2: [Specific focus + daily target, e.g., "Solve 2 dp problems rated ${currentRating}–${currentRating + 100} daily."]
-Week 3–4: [Next shift — tackle the next weak tag + try problems at ${currentRating + 100}–${targetRating}]
+Week 1–2: [Specific focus — the most critical weak topic + daily problem count + rating band to target]
+Week 3–4: [Next weak topic shift + push to harder problems approaching ${targetRating}]
 
 🏆 CONTEST STRATEGY
-[1–2 sentences. How should they approach Codeforces rounds at their current level? Which divisions? How many problems should they aim to solve?]
+[1–2 sentences on which CF divisions to enter and how many problems to aim for, based on current ${currentRating}.]
 
 💡 COACH'S SECRET TIP
-[One specific, tactical tip tailored to their exact weak spot or rating range that most people overlook — give real, actionable value here.]
+[One tactical, specific tip that directly addresses their biggest gap — something concrete, not generic.]
 
-Keep total length under 290 words. Be direct, bold, and motivating — like a coach who genuinely wants them to reach ${targetTier}.`;
+Keep under 300 words. Be direct and motivating like a real coach.`;
 
         const completion = await client.chat.completions.create({
           messages: [
@@ -200,14 +204,14 @@ Keep total length under 290 words. Be direct, bold, and motivating — like a co
         aiAdvice = generateFallbackAdvice(
           handle, currentRating, maxRating, targetRating,
           currentTier, targetTier, totalSolved,
-          weakTags, strongTags, tagCounts, recommendations
+          weakTags, tagCounts, recommendations
         );
       }
     } else {
       aiAdvice = generateFallbackAdvice(
         handle, currentRating, maxRating, targetRating,
         currentTier, targetTier, totalSolved,
-        weakTags, strongTags, tagCounts, recommendations
+        weakTags, tagCounts, recommendations
       );
     }
 
@@ -236,13 +240,16 @@ function generateFallbackAdvice(
   targetTier: string,
   totalSolved: number,
   weakTags: string[],
-  strongTags: string[],
   tagCounts: Record<string, number>,
   recommendations: CfProblem[],
 ) {
-  const topWeak    = weakTags.slice(0, 3).map(t => `${t} (${tagCounts[t] || 0} solved)`);
-  const strongStr  = strongTags.slice(0, 2).join(" and ");
-  const recNames   = recommendations.slice(0, 2).map(p => p.name).join(", ");
+  const topWeak   = weakTags.slice(0, 3).map(t => `${t} (${tagCounts[t] || 0} solved)`);
+  const strongStr = Object.entries(tagCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 2)
+    .map(([tag]) => tag)
+    .join(" and ");
+  const recNames  = recommendations.slice(0, 2).map(p => p.name).join(", ");
 
   return `🎯 WHERE YOU STAND
 ${handle}, you're currently rated ${currentRating} (${currentTier}) with ${totalSolved} problems solved — and your peak was ${maxRating}. Your strongest areas are ${strongStr}, which gives you a solid foundation. The gap to ${targetTier} (${targetRating}) is real, but absolutely closeable with focused work.
