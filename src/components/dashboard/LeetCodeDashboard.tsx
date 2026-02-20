@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Brain, Zap, Target, TrendingDown, CheckCircle2, ExternalLink,
-  RefreshCw, BookOpen,
+  RefreshCw, BookOpen, Trophy, Flame, Lightbulb, CalendarDays, AlertTriangle, Medal,
 } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -389,22 +389,32 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
       {/* ── AI Coach ── */}
       {!coachData ? (
         <Card className="border-dashed border-2 border-amber-500/20 bg-amber-500/5">
-          <CardContent className="flex flex-col items-center justify-center py-10 space-y-4 text-center">
-            <Brain className="h-10 w-10 text-amber-400" />
-            <div>
-              <h3 className="font-bold text-lg">LeetCode AI Coach</h3>
-              <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
-                Analyzes your tag distribution, identifies weak areas, and generates a 30-day topic-based study plan.
+          <CardContent className="flex flex-col items-center justify-center py-14 space-y-5 text-center">
+            <div className="p-5 bg-amber-500/10 rounded-full ring-4 ring-amber-500/5">
+              <Brain className="h-12 w-12 text-amber-400" />
+            </div>
+            <div className="space-y-2 max-w-md">
+              <h3 className="text-2xl font-bold">AI Performance Coach</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Analyzes your tag distribution, identifies weak areas, and gives you a professional coaching report — like having a personal trainer for LeetCode.
               </p>
             </div>
+            <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
+              {['Weakness Detection', 'Personalized Plan', 'Contest Strategy', 'Expert Tips'].map(f => (
+                <span key={f} className="flex items-center gap-1 px-2 py-1 rounded-full bg-muted border border-border/50">
+                  <CheckCircle2 className="h-3 w-3 text-amber-400" /> {f}
+                </span>
+              ))}
+            </div>
             <Button
+              size="lg"
               onClick={fetchCoach}
               disabled={coachLoading}
-              className="bg-amber-500 hover:bg-amber-600 text-black font-semibold gap-2"
+              className="mt-2 px-8 bg-amber-500 hover:bg-amber-600 text-black font-semibold gap-2"
             >
               {coachLoading
-                ? <><RefreshCw className="h-4 w-4 animate-spin" /> Analyzing...</>
-                : <><Zap className="h-4 w-4" /> Generate Study Plan</>
+                ? <><RefreshCw className="h-4 w-4 animate-spin" /> Analyzing your profile...</>
+                : <><Zap className="h-4 w-4" /> Get My Coaching Report</>
               }
             </Button>
             {coachError && <p className="text-destructive text-sm">{coachError}</p>}
@@ -413,6 +423,7 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
       ) : (
         <AnimatePresence>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+
             {/* Coach header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -420,8 +431,8 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
                   <Brain className="h-5 w-5 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg">AI Study Plan</h3>
-                  <p className="text-xs text-muted-foreground">Based on your topic distribution</p>
+                  <h3 className="font-bold text-lg">AI Coach Report</h3>
+                  <p className="text-xs text-muted-foreground">Based on your LeetCode performance profile</p>
                 </div>
               </div>
               <Button variant="outline" size="sm" onClick={fetchCoach} disabled={coachLoading} className="gap-2">
@@ -429,18 +440,95 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
               </Button>
             </div>
 
+            {/* Stat Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Card className="bg-gradient-to-br from-amber-500/10 to-transparent border-amber-500/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                    <Medal className="h-3.5 w-3.5 text-amber-400" /> Skill Level
+                  </div>
+                  <div className="text-2xl font-extrabold text-amber-400 capitalize">{coachData.userLevel}</div>
+                  <div className="text-xs text-muted-foreground mt-1">Current tier</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-red-500/10 to-transparent border-red-500/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                    <AlertTriangle className="h-3.5 w-3.5 text-red-400" /> Weakest Topic
+                  </div>
+                  <div className="text-xl font-bold text-red-400 capitalize leading-tight">
+                    {coachData.weakTags[0]?.replace(/-/g, ' ') || '—'}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Focus here first</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-violet-500/10 to-transparent border-violet-500/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                    <Trophy className="h-3.5 w-3.5 text-violet-400" /> Contest Rating
+                  </div>
+                  <div className="text-3xl font-extrabold text-violet-400">
+                    {coachData.contestRating ?? 'N/A'}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {coachData.attendedContests} contests attended
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Coach Advice — parsed sections */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-              {/* AI Advice */}
+              {/* AI Advice parsed into sections */}
               <Card className="lg:col-span-3 border-amber-500/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Brain className="h-4 w-4 text-amber-400" />
-                    30-Day Improvement Plan
+                    Your Coaching Report
                   </CardTitle>
+                  <CardDescription>Personalized advice from your AI coach</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-muted/40 rounded-lg p-4 text-sm leading-relaxed whitespace-pre-wrap border border-border/50">
-                    {coachData.aiAdvice}
+                  <div className="space-y-4">
+                    {coachData.aiAdvice.split('\n\n').filter(Boolean).map((block, i) => {
+                      const isStand   = block.startsWith('🎯');
+                      const isWeak    = block.startsWith('⚠️');
+                      const isPlan    = block.startsWith('📅');
+                      const isContest = block.startsWith('🏆');
+                      const isTip     = block.startsWith('💡');
+
+                      const icon = isStand   ? <Target className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                                 : isWeak    ? <AlertTriangle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+                                 : isPlan    ? <CalendarDays className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+                                 : isContest ? <Trophy className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />
+                                 : isTip     ? <Lightbulb className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                                 : <Flame className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />;
+
+                      const bgClass = isStand   ? 'bg-amber-500/5 border-amber-500/20'
+                                    : isWeak    ? 'bg-red-500/5 border-red-500/20'
+                                    : isPlan    ? 'bg-blue-500/5 border-blue-500/20'
+                                    : isContest ? 'bg-violet-500/5 border-violet-500/20'
+                                    : isTip     ? 'bg-emerald-500/5 border-emerald-500/20'
+                                    : 'bg-muted/30 border-border/50';
+
+                      const lines = block.split('\n');
+                      const header = lines[0];
+                      const body   = lines.slice(1).join('\n').trim();
+
+                      return (
+                        <div key={i} className={`rounded-lg border p-3.5 ${bgClass}`}>
+                          <div className="flex items-start gap-2">
+                            {icon}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm mb-1">{header}</p>
+                              {body && (
+                                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{body}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -452,7 +540,7 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
                     <Target className="h-4 w-4 text-amber-400" />
                     Focus Topics
                   </CardTitle>
-                  <CardDescription>Your weakest areas — practice here</CardDescription>
+                  <CardDescription>Your weakest areas — train here</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
@@ -464,7 +552,7 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
                         rel="noopener noreferrer"
                         className="block group"
                       >
-                        <div className="p-3 rounded-lg border border-border/50 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all">
+                        <div className="p-3 rounded-lg border border-border/50 hover:border-amber-500/30 hover:bg-amber-500/5 bg-card transition-all">
                           <div className="flex justify-between items-center mb-1.5">
                             <span className="font-medium text-sm capitalize group-hover:text-amber-400 transition-colors">
                               {rec.topic}
@@ -509,6 +597,7 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
                   <TrendingDown className="h-4 w-4 text-red-400" />
                   Topics to Prioritize
                 </CardTitle>
+                <CardDescription>Tap any tag to practice on LeetCode</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">

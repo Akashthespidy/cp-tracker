@@ -55,6 +55,7 @@ export async function POST(req: Request) {
     const easyCount = acStats["Easy"] || 0;
     const mediumCount = acStats["Medium"] || 0;
     const hardCount = acStats["Hard"] || 0;
+    const totalSolved = acStats["All"] || easyCount + mediumCount + hardCount;
 
     // Determine user level based on solved counts
     let userLevel: "beginner" | "intermediate" | "advanced" = "beginner";
@@ -76,6 +77,12 @@ export async function POST(req: Request) {
       .slice(0, 6)
       .map(t => t.slug);
 
+    // Strong tags (most solved)
+    const strongTags = allTags
+      .sort((a, b) => b.problemsSolved - a.problemsSolved)
+      .slice(0, 3)
+      .map(t => t.tagName);
+
     // Build recommendations (topic-based since LeetCode doesn't expose full unsolved problemset)
     const recommendations = weakTags.slice(0, 5).map(slug => {
       const difficulty = IMPORTANT_TAGS_BY_TIER.fundamental.includes(slug) ? "Easy/Medium"
@@ -96,41 +103,69 @@ export async function POST(req: Request) {
       .sort((a, b) => b.problemsSolved - a.problemsSolved)
       .slice(0, 15);
 
-    // Generate AI advice
-    let aiAdvice = "";
+    // Stats for coaching context
+    const contestRating = contestData?.rating ? Math.round(contestData.rating) : null;
+    const attendedContests = contestData?.attendedContestsCount || 0;
+    const acceptanceRate = totalStats["All"] ? Math.round((totalSolved / totalStats["All"]) * 100) : 0;
     const targetMedium = goalMedium || mediumCount + 25;
     const targetHard = goalHard || hardCount + 10;
 
+    // Generate AI advice
+    let aiAdvice = "";
+
     if (process.env.OPENAI_API_KEY) {
       try {
-        const prompt = `You are a LeetCode coach for user ${username}.
-Solved: Easy: ${easyCount}, Medium: ${mediumCount}, Hard: ${hardCount}.
-Contest Rating: ${contestData?.rating ? Math.round(contestData.rating) : "N/A"}.
-Weak Topics (by tag slug): ${weakTags.join(", ")}.
-Goal: Medium ${targetMedium}, Hard ${targetHard}.
+        const prompt = `You are a world-class LeetCode performance coach, like a personal trainer for coding interviews. You MUST speak directly to the athlete (user), using "you" and "your" — never refer to them in the third person.
 
-Write a concise, actionable 30-day improvement plan:
-1. Which 3 topics to focus on first and why
-2. Daily study routine (problems per day, difficulty mix)
-3. Contest preparation tip
-Keep it under 200 words, motivating, and specific.`;
+USER PROFILE:
+- Username: ${username}
+- Total Solved: ${totalSolved} problems (Easy: ${easyCount} | Medium: ${mediumCount} | Hard: ${hardCount})
+- Acceptance Rate: ${acceptanceRate}%
+- Contest Rating: ${contestRating ?? "No contests participated yet"}
+- Contests Attended: ${attendedContests}
+- Skill Level: ${userLevel}
+- Strongest Topics: ${strongTags.join(", ")}
+- Weakest Topics (lowest solved): ${weakTags.map(t => `${t.replace(/-/g, " ")} (${tagMap.get(t) || 0} solved)`).join(", ")}
+
+GOAL: Medium → ${targetMedium} | Hard → ${targetHard}
+
+Write a direct, personal, and motivating coaching advice report. Format it EXACTLY like this:
+
+🎯 WHERE YOU STAND
+[2–3 sentences giving an honest, direct assessment of their current level. Mention their strengths AND gaps. Be encouraging but realistic.]
+
+⚠️ YOUR CRITICAL WEAK SPOTS
+[Mention the top 2–3 weak tags by name and WHY each one matters for interviews/contests. Be specific — e.g., "You've only solved X dynamic programming problems, which is a red flag for FAANG interviews."]
+
+📅 YOUR 30-DAY BATTLE PLAN
+Week 1–2: [Specific focus area + daily target, e.g., "Grind 3 medium dynamic-programming problems daily."]
+Week 3–4: [Next focus shift + how to level up]
+
+🏆 CONTEST STRATEGY
+[1–2 sentences on contest approach based on their current rating/participation. If they haven't attended contests, urge them to start.]
+
+💡 COACH'S SECRET TIP
+[One specific, tactical tip tailored to their exact weak spot that most people overlook — give real value here.]
+
+Keep total length under 280 words. Be direct, bold, and motivating — like a coach who genuinely wants them to succeed.`;
 
         const completion = await client.chat.completions.create({
           messages: [
-            { role: "system", content: "You are a concise, motivating LeetCode and interview prep coach." },
+            { role: "system", content: "You are an elite, direct, and highly motivating LeetCode and coding interview coach. You give brutally honest but encouraging feedback like a professional athletic coach would. You always speak directly to the athlete using 'you/your'." },
             { role: "user", content: prompt },
           ],
           model: "gpt-3.5-turbo",
-          max_tokens: 300,
+          max_tokens: 500,
+          temperature: 0.8,
         });
 
         aiAdvice = completion.choices[0].message.content || "";
       } catch (err: unknown) {
         console.error("OpenAI error:", err instanceof Error ? err.message : err);
-        aiAdvice = generateFallbackAdvice(username, easyCount, mediumCount, hardCount, weakTags, targetMedium, targetHard);
+        aiAdvice = generateFallbackAdvice(username, easyCount, mediumCount, hardCount, weakTags, strongTags, tagMap, contestRating, attendedContests, targetMedium, targetHard, userLevel);
       }
     } else {
-      aiAdvice = generateFallbackAdvice(username, easyCount, mediumCount, hardCount, weakTags, targetMedium, targetHard);
+      aiAdvice = generateFallbackAdvice(username, easyCount, mediumCount, hardCount, weakTags, strongTags, tagMap, contestRating, attendedContests, targetMedium, targetHard, userLevel);
     }
 
     return NextResponse.json({
@@ -141,8 +176,8 @@ Keep it under 200 words, motivating, and specific.`;
       tagDistribution,
       aiAdvice,
       userLevel,
-      contestRating: contestData?.rating ? Math.round(contestData.rating) : null,
-      attendedContests: contestData?.attendedContestsCount || 0,
+      contestRating: contestRating,
+      attendedContests: attendedContests,
     });
   } catch (err) {
     console.error("LeetCode Coach error:", err);
@@ -156,17 +191,33 @@ function generateFallbackAdvice(
   medium: number,
   hard: number,
   weakTags: string[],
+  strongTags: string[],
+  tagMap: Map<string, number>,
+  contestRating: number | null,
+  attendedContests: number,
   targetMedium: number,
   targetHard: number,
+  userLevel: string,
 ) {
-  const topWeak = weakTags.slice(0, 3).map(t => t.replace(/-/g, " ")).join(", ");
+  const topWeak = weakTags.slice(0, 3).map(t => `${t.replace(/-/g, " ")} (${tagMap.get(t) || 0} solved)`);
   const mediumGap = Math.max(0, targetMedium - medium);
   const hardGap = Math.max(0, targetHard - hard);
-  return `📊 Analysis for ${username}: You've solved ${easy} Easy / ${medium} Medium / ${hard} Hard problems.
+  const levelLabel = userLevel === "beginner" ? "early-stage coder" : userLevel === "intermediate" ? "solid mid-level coder" : "advanced coder";
+  const strongStr = strongTags.slice(0, 2).join(" and ");
 
-🎯 Priority Topics: Your weakest areas are ${topWeak}. Dedicate the first 2 weeks specifically to these — solve 3–5 problems per topic before moving on.
+  return `🎯 WHERE YOU STAND
+${username}, you're a ${levelLabel} with ${easy + medium + hard} problems solved (Easy: ${easy} | Medium: ${medium} | Hard: ${hard}). Your strongest areas are ${strongStr}, which is a solid foundation — but there are clear gaps holding you back.
 
-📅 Daily Plan: Solve 2–3 Mediums daily. On weekends, tackle 1 Hard problem. To hit your goal, you need ${mediumGap} more Mediums and ${hardGap} more Hards.
+⚠️ YOUR CRITICAL WEAK SPOTS
+Your weakest areas right now are ${topWeak.join(", ")}. These are not optional — they appear in nearly every technical interview at top companies. If you skip them, you're leaving money on the table.
 
-🏆 Contest Tip: Participate in weekly LeetCode contests every Sunday. Even if you don't finish all 4 problems, the timed pressure builds instincts that solo practice can't replicate.`;
+📅 YOUR 30-DAY BATTLE PLAN
+Week 1–2: Lock in on ${weakTags[0]?.replace(/-/g, " ") || "dynamic programming"} exclusively. Solve 3 Mediums every single day. No excuses.
+Week 3–4: Shift to ${weakTags[1]?.replace(/-/g, " ") || "graphs"} + ${weakTags[2]?.replace(/-/g, " ") || "backtracking"}. You need ${mediumGap} more Mediums and ${hardGap} more Hards to hit your goal. That's ${Math.ceil(mediumGap / 14)} Mediums per day.
+
+🏆 CONTEST STRATEGY
+${attendedContests === 0 ? "You've never competed in a contest — that changes this Sunday. Sign up for LeetCode Weekly Contest and commit. Timed pressure is the only thing that truly sharpens your instincts." : `You've attended ${attendedContests} contests${contestRating ? ` with a rating of ${contestRating}` : ""}. Push yourself to participate every single week — consistency is your multiplier.`}
+
+💡 COACH'S SECRET TIP
+Don't just solve problems — study the patterns. After each problem, write down the core technique in one sentence. After 30 days you'll have a personal pattern library that no interview can catch you off guard with.`;
 }
