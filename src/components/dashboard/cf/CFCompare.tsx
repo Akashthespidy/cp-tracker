@@ -48,8 +48,7 @@ const TOOLTIP_STYLE = {
   color: '#fff',
   fontSize: '12px',
 };
-const TOOLTIP_ITEM  = { color: '#fff' };
-const TOOLTIP_LABEL = { color: '#aaa' };
+
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface SolvedProblem {
@@ -97,7 +96,7 @@ function Delta({ a, b, label }: { a: number; b: number; label: string }) {
       <Minus className="h-3 w-3" /> Tied in {label}
     </span>
   );
-  const winner = diff > 0 ? 'A' : 'B';
+
   const color  = diff > 0 ? COLOR_A : COLOR_B;
   return (
     <span className="flex items-center gap-1 text-xs font-medium" style={{ color }}>
@@ -144,12 +143,12 @@ function MiniProfile({ data, accent }: { data: HandleData; accent: string }) {
 }
 
 // ── Custom Tooltip for grouped bar ───────────────────────────────────────────
-function BucketTooltip({ active, payload, label }: any) {
+function BucketTooltip({ active, payload, label }: { active?: boolean; payload?: { dataKey: string; fill: string; name: string; value: number }[]; label?: string }) {
   if (!active || !payload?.length) return null;
   return (
     <div style={TOOLTIP_STYLE} className="px-3 py-2 rounded-lg text-xs space-y-1 min-w-[140px]">
       <p className="text-[11px] font-semibold text-muted-foreground mb-1.5">{label}</p>
-      {payload.map((p: any) => (
+      {payload.map((p: { dataKey: string; fill: string; name: string; value: number }) => (
         <div key={p.dataKey} className="flex justify-between gap-4">
           <span style={{ color: p.fill }} className="font-medium">{p.name}</span>
           <span className="text-white font-bold">{p.value}</span>
@@ -160,9 +159,9 @@ function BucketTooltip({ active, payload, label }: any) {
 }
 
 // ── Tag comparison tooltip ────────────────────────────────────────────────────
-function TagTooltip({ active, payload, label }: any) {
+function TagTooltip({ active, payload, label }: { active?: boolean; payload?: { dataKey: string; fill: string; name: string; value: number }[]; label?: string }) {
   if (!active || !payload?.length) return null;
-  const [a, b] = [payload.find((p: any) => p.dataKey === 'a'), payload.find((p: any) => p.dataKey === 'b')];
+  const [a, b] = [payload.find((p: { dataKey: string }) => p.dataKey === 'a'), payload.find((p: { dataKey: string }) => p.dataKey === 'b')];
   return (
     <div style={TOOLTIP_STYLE} className="px-3 py-2 rounded-lg text-xs space-y-1 min-w-[160px]">
       <p className="text-[11px] font-semibold text-muted-foreground capitalize mb-1.5">{label}</p>
@@ -193,8 +192,8 @@ export function CFCompare() {
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setData(json);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Fetch failed');
     } finally {
       setLoading(false);
     }
@@ -407,7 +406,8 @@ export function CFCompare() {
                           dataKey={data.a.info.handle}
                           position="top"
                           style={{ fill: '#aaa', fontSize: 9, fontWeight: 600 }}
-                          formatter={(v: any) => v || ''}
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          formatter={(v: any) => v != null ? String(v) : ''}
                         />
                       </Bar>
                       <Bar
@@ -421,7 +421,8 @@ export function CFCompare() {
                           dataKey={data.b.info.handle}
                           position="top"
                           style={{ fill: '#aaa', fontSize: 9, fontWeight: 600 }}
-                          formatter={(v: any) => v || ''}
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          formatter={(v: any) => v != null ? String(v) : ''}
                         />
                       </Bar>
                     </BarChart>
@@ -677,7 +678,8 @@ export function CFCompare() {
                               dataKey="a"
                               position="right"
                               style={{ fill: '#aaa', fontSize: 9 }}
-                              formatter={(v: any) => v || ''}
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                              formatter={(v: any) => v != null ? String(v) : ''}
                             />
                           </Bar>
                           <Bar dataKey="b" name={data.b.info.handle} fill={COLOR_B} radius={[0, 5, 5, 0]} barSize={10} opacity={0.88}>
@@ -685,7 +687,8 @@ export function CFCompare() {
                               dataKey="b"
                               position="right"
                               style={{ fill: '#aaa', fontSize: 9 }}
-                              formatter={(v: any) => v || ''}
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                              formatter={(v: any) => v != null ? String(v) : ''}
                             />
                           </Bar>
                         </BarChart>

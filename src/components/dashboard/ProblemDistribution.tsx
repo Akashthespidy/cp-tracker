@@ -13,9 +13,15 @@ interface ProblemStatsProps {
   totalOverride?: number;
 }
 
-// Custom label rendered on top of each bar
-function BarLabel(props: any) {
-  const { x, y, width, value } = props;
+interface BarLabelProps {
+  x?: number;
+  y?: number;
+  width?: number;
+  value?: number;
+}
+
+function BarLabel(props: BarLabelProps) {
+  const { x = 0, y = 0, width = 0, value } = props;
   if (!value) return null;
   return (
     <text
@@ -65,7 +71,7 @@ export function ProblemDistribution({ data, type = 'bar', totalOverride }: Probl
                 paddingAngle={4}
                 dataKey="count"
                 nameKey="difficulty"
-                label={({ name, value }) => `${value}`}
+                label={({ value }) => `${value}`}
                 labelLine={false}
               >
                 {data.map((entry, index) => (
@@ -108,7 +114,7 @@ export function ProblemDistribution({ data, type = 'bar', totalOverride }: Probl
                   fontSize: '12px',
                 }}
                 cursor={{ fill: 'rgba(255,255,255,0.03)' }}
-                formatter={(val: any) => [`${val} solved`, 'Count']}
+                formatter={(val: number | undefined) => [`${val ?? 0} solved`, 'Count']}
               />
               <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={50}>
                 {data.map((entry, index) => (

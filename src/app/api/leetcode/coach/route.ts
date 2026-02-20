@@ -5,7 +5,8 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy",
 });
 
-// Weak tag thresholds per difficulty level
+interface SubmissionStat { difficulty: string; count: number; }
+interface TagEntry      { tagName: string; tagSlug: string; problemsSolved: number; }
 const IMPORTANT_TAGS_BY_TIER = {
   fundamental: ["array", "string", "hash-table", "math", "sorting", "greedy", "binary-search", "two-pointers"],
   intermediate: ["dynamic-programming", "depth-first-search", "breadth-first-search", "backtracking", "stack", "queue", "linked-list", "tree", "graph", "sliding-window", "prefix-sum"],
@@ -33,12 +34,12 @@ export async function POST(req: Request) {
 
     // Parse solved counts
     const acStats: Record<string, number> = {};
-    user.submitStats.acSubmissionNum.forEach((s: any) => {
+    user.submitStats.acSubmissionNum.forEach((s: SubmissionStat) => {
       acStats[s.difficulty] = s.count;
     });
 
     const totalStats: Record<string, number> = {};
-    user.submitStats.totalSubmissionNum.forEach((s: any) => {
+    user.submitStats.totalSubmissionNum.forEach((s: SubmissionStat) => {
       totalStats[s.difficulty] = s.count;
     });
 
@@ -46,9 +47,9 @@ export async function POST(req: Request) {
     const allTags: { tagName: string; tagSlug: string; problemsSolved: number; tier: string }[] = [];
     const { advanced, intermediate, fundamental } = user.tagProblemCounts;
 
-    fundamental.forEach((t: any) => allTags.push({ ...t, tier: "fundamental" }));
-    intermediate.forEach((t: any) => allTags.push({ ...t, tier: "intermediate" }));
-    advanced.forEach((t: any) => allTags.push({ ...t, tier: "advanced" }));
+    fundamental.forEach((t: TagEntry) => allTags.push({ ...t, tier: "fundamental" }));
+    intermediate.forEach((t: TagEntry) => allTags.push({ ...t, tier: "intermediate" }));
+    advanced.forEach((t: TagEntry) => allTags.push({ ...t, tier: "advanced" }));
 
     // Identify weak tags — ones with fewest problems relative to tier importance
     const easyCount = acStats["Easy"] || 0;
@@ -124,8 +125,8 @@ Keep it under 200 words, motivating, and specific.`;
         });
 
         aiAdvice = completion.choices[0].message.content || "";
-      } catch (err: any) {
-        console.error("OpenAI error:", err.message);
+      } catch (err: unknown) {
+        console.error("OpenAI error:", err instanceof Error ? err.message : err);
         aiAdvice = generateFallbackAdvice(username, easyCount, mediumCount, hardCount, weakTags, targetMedium, targetHard);
       }
     } else {

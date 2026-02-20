@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, CartesianGrid
 } from 'recharts';
@@ -18,11 +18,19 @@ interface CoachViewProps {
   currentRating: number;
 }
 
+interface Recommendation {
+  contestId: number;
+  index:     string;
+  name:      string;
+  rating:    number;
+  tags:      string[];
+}
+
 interface CoachData {
-  tagCounts: Record<string, number>;
-  weakTags: string[];
-  recommendations: any[];
-  aiAdvice: string;
+  tagCounts:       Record<string, number>;
+  weakTags:        string[];
+  recommendations: Recommendation[];
+  aiAdvice:        string;
 }
 
 export function CoachView({ handle, currentRating }: CoachViewProps) {
@@ -42,8 +50,8 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
       const result = await res.json();
       if (result.error) throw new Error(result.error);
       setData(result);
-    } catch (err: any) {
-      setError(err.message || 'Failed to generate plan');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to generate plan');
     } finally {
       setLoading(false);
     }
@@ -193,7 +201,7 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Target className="h-4 w-4 text-emerald-400" />
-                Today's Training Set
+                Today&apos;s Training Set
               </CardTitle>
               <CardDescription>Targeted problems for your weak areas</CardDescription>
             </CardHeader>
@@ -275,7 +283,7 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
                       color: '#fff',
                       fontSize: '12px',
                     }}
-                    formatter={(val: any) => [`${val} solved`, 'Count']}
+                    formatter={(val: number | undefined) => [`${val ?? 0} solved`, 'Count']}
                   />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={18}>
                     {chartData.map((entry, index) => (

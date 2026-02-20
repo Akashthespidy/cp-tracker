@@ -3,23 +3,24 @@
 import { useState, useEffect } from 'react';
 import { useAtom } from 'jotai';
 import { leetcodeHandleAtom } from '@/lib/store';
-import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { LeetCodeDashboard } from '@/components/dashboard/LeetCodeDashboard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion } from 'framer-motion';
-import { Zap, ArrowRight, Code, CheckCircle2, Activity } from 'lucide-react';
+import { ArrowRight, Code, CheckCircle2, Activity } from 'lucide-react';
 
 export default function LeetCodePage() {
   const [handle, setHandle] = useAtom(leetcodeHandleAtom);
   const [inputHandle, setInputHandle] = useState('');
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const router = useRouter();
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
 
   const submitHandle = (e?: React.FormEvent) => {
     e?.preventDefault();

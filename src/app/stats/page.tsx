@@ -80,12 +80,15 @@ function CountUp({ target, duration = 1200 }: { target: number; duration?: numbe
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (target === 0) { setVal(0); return; }
+    if (target === 0) {
+      setVal(0); return;
+    }
     const start = performance.now();
     const step  = (now: number) => {
       const t = Math.min((now - start) / duration, 1);
       // ease out cubic
       const eased = 1 - Math.pow(1 - t, 3);
+       
       setVal(Math.round(eased * target));
       if (t < 1) rafRef.current = requestAnimationFrame(step);
     };
@@ -248,19 +251,20 @@ function StatsContent() {
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setResult(json);
-    } catch (e: any) {
-      setError(e.message ?? 'Failed to fetch stats');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? (e.message ?? 'Failed to fetch stats') : 'Failed to fetch stats');
     } finally {
       setLoading(false);
     }
   }, [router]);
 
   // Auto-fetch on load if URL already has params
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const any = (['cf', 'lc', 'at', 'cc'] as PlatformKey[]).some(k => searchParams.get(k));
     if (any) fetchStats(handles);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   // ── Copy shareable link ─────────────────────────────────────────────────────
   const copyLink = async () => {

@@ -1,5 +1,5 @@
 
-import { startOfMonth, subMonths, format } from 'date-fns';
+import { subMonths, format } from 'date-fns';
 
 export type Platform = 'Codeforces' | 'LeetCode' | 'CodeChef' | 'AtCoder';
 

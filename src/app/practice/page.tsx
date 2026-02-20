@@ -12,6 +12,7 @@ export default function PracticePage() {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {

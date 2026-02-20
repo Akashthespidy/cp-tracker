@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAtom } from 'jotai';
 import { handleAtom } from '@/lib/store';
 import { Button } from '@/components/ui/button';
-import { Activity, LayoutGrid, ListTodo, User, LogOut, Brain, Code2, Swords, Globe } from 'lucide-react';
+import { Activity, LayoutGrid, ListTodo, User, LogOut, Code2, Swords, Globe } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 

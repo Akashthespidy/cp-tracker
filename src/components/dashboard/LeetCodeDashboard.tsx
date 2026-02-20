@@ -93,7 +93,7 @@ const TIER_COLORS: Record<string, string> = {
 };
 
 // ── Custom pie label (positions text outside slices so all labels are visible) ─
-function renderPieLabel({ cx, cy, midAngle, outerRadius, value }: any) {
+function renderPieLabel({ cx = 0, cy = 0, midAngle = 0, outerRadius = 0, value }: { cx?: number; cy?: number; midAngle?: number; outerRadius?: number; value?: number }) {
   if (!value) return null;
   const RADIAN = Math.PI / 180;
   const radius = outerRadius + 22;
@@ -127,7 +127,7 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
   const [coachError,   setCoachError]   = useState<string | null>(null);
 
   // Use cached data if it's for the same username, otherwise null
-  const userData: UserData | null = cachedUsername === username ? cachedData : null;
+  const userData: UserData | null = cachedUsername === username ? (cachedData as UserData | null) : null;
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -138,8 +138,8 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
       if (data.error) throw new Error(data.error);
       setCachedData(data);
       setCachedUsername(username);
-    } catch (e: any) {
-      setError(e.message || 'Failed to load LeetCode profile');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to load LeetCode profile');
     } finally {
       setLoading(false);
     }
@@ -157,8 +157,8 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setCoachData(data);
-    } catch (e: any) {
-      setCoachError(e.message || 'Failed to generate plan');
+    } catch (e: unknown) {
+      setCoachError(e instanceof Error ? e.message : 'Failed to generate plan');
     } finally {
       setCoachLoading(false);
     }
@@ -295,7 +295,7 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
                     contentStyle={TOOLTIP_STYLE}
                     itemStyle={TOOLTIP_ITEM_STYLE}
                     labelStyle={TOOLTIP_LABEL_STYLE}
-                    formatter={(v: any, n: any) => [`${v} solved`, n]}
+                    formatter={(v: number | undefined, n: string | undefined) => [`${v ?? 0} solved`, n ?? '']}
                   />
                   <Legend iconSize={10} />
                 </PieChart>
@@ -328,7 +328,7 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
                     contentStyle={TOOLTIP_STYLE}
                     itemStyle={TOOLTIP_ITEM_STYLE}
                     labelStyle={TOOLTIP_LABEL_STYLE}
-                    formatter={(v: any) => [`${v} solved`, 'Problems']}
+                    formatter={(v: number | undefined) => [`${v ?? 0} solved`, 'Problems']}
                   />
                   <Bar dataKey="problemsSolved" radius={[0, 6, 6, 0]} barSize={14}>
                     {allTagsForChart.map((entry, i) => (

@@ -2,15 +2,15 @@
 
 import { useAtom } from 'jotai';
 import { handleAtom, selectedLadderAtom, sheetProblemsAtom, sheetLoadingAtom, sheetGoalsAtom, SheetGoal } from '@/lib/store';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
-import { BookOpen, Target, CheckCircle2, ExternalLink, ChevronRight, Loader2, Calendar, Trophy, Clock, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, Target, CheckCircle2, ExternalLink, ChevronRight, Loader2, Trophy, Clock, Plus, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { differenceInDays, parseISO, addDays, format } from 'date-fns';
+import { differenceInDays, parseISO, addDays } from 'date-fns';
 import { useState } from 'react';
 
 const LADDERS = [

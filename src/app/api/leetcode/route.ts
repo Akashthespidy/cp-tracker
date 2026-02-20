@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 // Simple in-memory cache: username → { data, timestamp }
-const cache = new Map<string, { data: any; ts: number }>();
+const cache = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL = 1000 * 60 * 30; // 30 minutes — LeetCode blocks heavy use
 
 const PROFILE_QUERY = `

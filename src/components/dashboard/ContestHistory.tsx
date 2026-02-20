@@ -1,7 +1,6 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ContestResult } from '@/lib/mockdata';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';

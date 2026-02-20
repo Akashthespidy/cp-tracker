@@ -63,7 +63,7 @@ function getNextRank(rating: number): { rank: string; target: number; color: str
 
 export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) {
   const [profile,        setProfile]        = useState<UserProfile>(getMockProfile(platform, handle));
-  const [ratingHistory,  setRatingHistory]  = useState<any[]>(getRatingHistory(platform));
+  const [ratingHistory,  setRatingHistory]  = useState<{ date: string; rating: number }[]>(getRatingHistory(platform));
   const [problemStats,   setProblemStats]   = useState<ProblemStats[]>(getProblemStats(platform));
   const [recentContests, setRecentContests] = useState<ContestResult[]>(getRecentContests(platform));
   const [recommendations,setRecommendations]= useState<Recommendation[]>(getRecommendations(platform, profile.rating));
@@ -97,14 +97,14 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
           setProfile(newProfile);
 
           // Rating history
-          setRatingHistory(data.ratingHistory.map((r: any) => ({
+          setRatingHistory(data.ratingHistory.map((r: { ratingUpdateTimeSeconds: number; newRating: number }) => ({
             date:   format(new Date(r.ratingUpdateTimeSeconds * 1000), 'MMM yy'),
             rating: r.newRating,
           })));
 
           // Recent contests (last 10, newest first)
           setRecentContests(
-            [...data.ratingHistory].reverse().slice(0, 10).map((r: any) => ({
+            [...data.ratingHistory].reverse().slice(0, 10).map((r: { ratingUpdateTimeSeconds: number; newRating: number; oldRating: number; rank: number; contestName: string }) => ({
               contestName: r.contestName,
               rank:        r.rank,
               ratingChange: r.newRating - r.oldRating,
@@ -121,7 +121,7 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
             '≤1000': 0, '1001–1200': 0, '1201–1400': 0, '1401–1600': 0, '1601+': 0,
           };
 
-          data.submissions.forEach((sub: any) => {
+          data.submissions.forEach((sub: { verdict: string; problem: { contestId: number; index: string; rating?: number; tags?: string[] } | null }) => {
             if (sub.verdict !== 'OK' || !sub.problem) return;
             const key       = `${sub.problem.contestId}-${sub.problem.index}`;
             const isNewSolve = !allSolved.has(key);

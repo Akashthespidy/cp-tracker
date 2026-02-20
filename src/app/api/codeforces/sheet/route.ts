@@ -1,6 +1,19 @@
 import { NextResponse } from "next/server";
 
-let problemsetCache: any[] | null = null;
+interface CfProblem {
+  contestId: number;
+  index:     string;
+  name:      string;
+  rating?:   number;
+  tags:      string[];
+}
+
+interface CfSubmission {
+  verdict:  string;
+  problem?: { contestId: number; index: string };
+}
+
+let problemsetCache: CfProblem[] | null = null;
 let lastFetchTime = 0;
 const CACHE_DURATION = 1000 * 60 * 60 * 6; // 6 hours
 
@@ -30,7 +43,7 @@ export async function POST(request: Request) {
         );
         const statusData = await statusRes.json();
         if (statusData.status === "OK") {
-          statusData.result.forEach((sub: any) => {
+          statusData.result.forEach((sub: CfSubmission) => {
             if (sub.verdict === "OK" && sub.problem) {
               solvedSet.add(`${sub.problem.contestId}-${sub.problem.index}`);
             }
@@ -65,15 +78,15 @@ export async function POST(request: Request) {
 
     const ladderProblems = problemsetCache
       .filter(
-        (p: any) =>
+        (p: CfProblem) =>
           p.rating !== undefined &&
           p.rating >= min &&
           p.rating <= max &&
           p.contestId < 2000 // Only regular contests, not educational/gym
       )
-      .sort((a: any, b: any) => a.contestId - b.contestId) // Classic A2OJ: oldest first
+      .sort((a: CfProblem, b: CfProblem) => a.contestId - b.contestId) // Classic A2OJ: oldest first
       .slice(0, 100)
-      .map((p: any) => ({
+      .map((p: CfProblem) => ({
         contestId: p.contestId,
         index: p.index,
         name: p.name,

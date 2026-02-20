@@ -1,6 +1,6 @@
 'use client';
 
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, ReferenceLine } from 'recharts';
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
@@ -69,7 +69,7 @@ export function RatingChart({ data, color }: RatingChartProps) {
                   fontSize: '12px',
                 }}
                 itemStyle={{ color: color }}
-                formatter={(val: any) => [val, 'Rating']}
+                formatter={(val: number | undefined) => [val ?? 0, 'Rating']}
               />
               <Area
                 type="monotone"

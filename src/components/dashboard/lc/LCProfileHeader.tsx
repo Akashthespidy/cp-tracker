@@ -1,6 +1,7 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Trophy, TrendingUp, Target } from 'lucide-react';
 
@@ -43,7 +44,7 @@ export function LCProfileHeader({
           {/* Avatar */}
           <div className="h-20 w-20 rounded-full border-4 border-amber-500/30 overflow-hidden bg-muted shrink-0">
             {avatar ? (
-              <img src={avatar} alt={username} className="w-full h-full object-cover" />
+              <Image src={avatar} alt={username} width={80} height={80} className="w-full h-full object-cover" unoptimized />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-amber-400">
                 {username[0].toUpperCase()}

@@ -44,7 +44,7 @@ async function fetchCF(handle: string): Promise<Omit<PlatformResult, 'handle'>> 
     if (data.status !== 'OK') return { solved: null, error: 'Handle not found' };
 
     const seen = new Set<string>();
-    for (const sub of data.result as any[]) {
+    for (const sub of data.result as { verdict: string; problem: { contestId: number; index: string } | null }[]) {
       if (sub.verdict !== 'OK' || !sub.problem) continue;
       seen.add(`${sub.problem.contestId}-${sub.problem.index}`);
     }
@@ -75,7 +75,7 @@ async function fetchLC(handle: string): Promise<Omit<PlatformResult, 'handle'>> 
     const user = json.data?.matchedUser;
     if (!user) return { solved: null, error: 'Handle not found' };
     const total =
-      (user.submitStats.acSubmissionNum as any[]).find(x => x.difficulty === 'All')?.count ?? 0;
+      (user.submitStats.acSubmissionNum as { difficulty: string; count: number }[]).find(x => x.difficulty === 'All')?.count ?? 0;
     return { solved: total, error: null };
   } catch {
     return { solved: null, error: 'Fetch failed' };

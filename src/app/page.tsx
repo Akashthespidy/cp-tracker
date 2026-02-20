@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 import { PlatformDashboard } from '@/components/dashboard/PlatformDashboard';
 import { Navbar } from '@/components/Navbar';
-import { Activity, Code, ArrowRight, Zap, Target, TrendingUp, Brain, ChevronRight, Code2 } from 'lucide-react';
+import { Activity, ArrowRight, Zap, Code2 } from 'lucide-react';
 import { useAtom } from 'jotai';
 import { handleAtom } from '@/lib/store';
 import Link from 'next/link';
@@ -20,6 +20,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

@@ -7,8 +7,22 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy", // Fallback to dummy if not set
 });
 
+
+interface CfProblem {
+  contestId: number;
+  index:     string;
+  name:      string;
+  rating?:   number;
+  tags:      string[];
+}
+
+interface CfSubmission {
+  verdict:  string;
+  problem?: { contestId: number; index: string; tags: string[] };
+}
+
 // Cache for problemset to avoid fetching every time within instance
-let problemsetCache: any[] | null = null;
+let problemsetCache: CfProblem[] | null = null;
 let lastFetchTime = 0;
 const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
@@ -43,7 +57,7 @@ export async function POST(request: Request) {
     const solvedProblems = new Set<string>();
     const tagCounts: Record<string, number> = {};
     
-    statusData.result.forEach((sub: any) => {
+    statusData.result.forEach((sub: CfSubmission) => {
       if (sub.verdict === 'OK' && sub.problem && sub.problem.tags) {
         const id = `${sub.problem.contestId}-${sub.problem.index}`;
         if (!solvedProblems.has(id)) {
@@ -88,7 +102,7 @@ export async function POST(request: Request) {
 
     // 5. Recommendations
     const recommendations = problemsetCache
-      .filter((p: any) => {
+      .filter((p: CfProblem) => {
         return (
           p.rating !== undefined &&
           p.rating >= currentRating &&
@@ -96,7 +110,7 @@ export async function POST(request: Request) {
           !solvedProblems.has(`${p.contestId}-${p.index}`)
         );
       })
-      .map((p: any) => {
+      .map((p: CfProblem) => {
         let score = 0;
         // Prioritize problems with weak tags
         const hasWeakTag = p.tags.some((t: string) => weakTags.includes(t));
@@ -105,7 +119,7 @@ export async function POST(request: Request) {
         // Prioritize distinct problems (not too many from same contest? unlikely to matter much here)
         return { ...p, score };
       })
-      .sort((a, b) => b.score - a.score || a.rating - b.rating) // Descending score, then easier rating first
+      .sort((a, b) => b.score - a.score || (a.rating ?? 0) - (b.rating ?? 0)) // Descending score, then easier rating first
       .slice(0, 5); // Return top 5
 
     // 6. AI Suggestion Generation
@@ -121,7 +135,7 @@ export async function POST(request: Request) {
           ${weakTags.join(', ')}
 
           Recommended Problems to Solve:
-          ${recommendations.map((p: any) => `- ${p.name} (${p.rating}) [${p.tags.join(', ')}]`).join('\n')}
+          ${recommendations.map((p: CfProblem) => `- ${p.name} (${p.rating}) [${p.tags.join(', ')}]`).join('\n')}
 
           Provide a short, structured training plan. Explain WHY these tags strictly (2 sentences). Then give 3 validation tips for the recommended problems.
         `;
@@ -132,8 +146,8 @@ export async function POST(request: Request) {
         });
 
         aiAdvice = completion.choices[0].message.content || "No advice generated.";
-      } catch (err: any) {
-        console.error("OpenAI API Error:", err.message);
+      } catch (err: unknown) {
+        console.error("OpenAI API Error:", err instanceof Error ? err.message : err);
         aiAdvice = "AI service unavailable. Focus on the recommended problems leveraging the weak tags identified above.";
       }
     } else {

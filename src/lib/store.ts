@@ -9,13 +9,21 @@ export const handleAtom = atomWithStorage<string | null>('cp-tracker-handle', nu
 export const leetcodeHandleAtom = atomWithStorage<string | null>('cp-tracker-lc-handle', null);
 
 // LeetCode cached response data (so we don't re-fetch on every tab switch)
-export const leetcodeDataAtom = atom<any | null>(null);
+export const leetcodeDataAtom         = atom<unknown>(null);
 export const leetcodeDataUsernameAtom = atom<string | null>(null);
 
 // Practice Sheet State
-export const selectedLadderAtom = atom<string | null>(null);
-export const sheetProblemsAtom = atom<any[]>([]); // Using 'any' for now to match current state, could be typed
-export const sheetLoadingAtom = atom<boolean>(false);
+export interface SheetProblem {
+  contestId: number;
+  index:     string;
+  name:      string;
+  rating:    number;
+  tags:      string[];
+  solved:    boolean;
+}
+export const selectedLadderAtom  = atom<string | null>(null);
+export const sheetProblemsAtom   = atom<SheetProblem[]>([]);
+export const sheetLoadingAtom    = atom<boolean>(false);
 
 export interface SheetGoal {
   target: number;

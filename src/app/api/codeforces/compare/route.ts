@@ -8,8 +8,7 @@ const cache = new Map<string, { data: ProcessedHandle; ts: number; v: number }>(
 const CACHE_TTL = 1000 * 60 * 20; // 20 min
 
 // ── Rating buckets ─────────────────────────────────────────────────────────────
-const RATING_BUCKETS = ['≤800', '801–1000', '1001–1200', '1201–1400', '1401–1600', '1601–1900', '1901+'] as const;
-type RatingBucket = typeof RATING_BUCKETS[number];
+type RatingBucket = '≤800' | '801–1000' | '1001–1200' | '1201–1400' | '1401–1600' | '1601–1900' | '1901+';
 
 function getBucket(r: number): RatingBucket {
   if (r <= 800)  return '≤800';
@@ -148,7 +147,7 @@ export async function GET(req: Request) {
   try {
     const [a, b] = await Promise.all([fetchAndProcess(h1), fetchAndProcess(h2)]);
     return NextResponse.json({ a, b });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message ?? 'Failed to fetch' }, { status: 404 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? (err.message ?? 'Failed to fetch') : 'Failed to fetch' }, { status: 404 });
   }
 }
