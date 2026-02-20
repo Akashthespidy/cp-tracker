@@ -16,7 +16,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface CoachViewProps {
   handle: string;
-  currentRating: number;
   goalRating: number;
 }
 
@@ -39,7 +38,7 @@ interface CoachData {
   maxRating:    number;
 }
 
-export function CoachView({ handle, currentRating, goalRating }: CoachViewProps) {
+export function CoachView({ handle, goalRating }: CoachViewProps) {
   const [data, setData]           = useState<CoachData | null>(null);
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState<string | null>(null);

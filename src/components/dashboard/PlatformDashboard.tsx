@@ -273,7 +273,6 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
           <div className="col-span-12">
             <CoachView
               handle={handle}
-              currentRating={profile.rating}
               goalRating={goalRating || nextRank.target}
             />
           </div>
