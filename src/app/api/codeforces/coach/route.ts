@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "dummy",
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 interface CfProblem {
