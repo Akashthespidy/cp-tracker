@@ -1,7 +1,8 @@
 'use client';
 
 import {
-  Brain, Zap, Target, BarChart2, TrendingDown, RefreshCw, ExternalLink, CheckCircle2
+  Brain, Zap, Target, BarChart2, TrendingDown, RefreshCw, ExternalLink,
+  CheckCircle2, Trophy, Flame, Lightbulb, CalendarDays, AlertTriangle, Medal,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -27,25 +28,29 @@ interface Recommendation {
 }
 
 interface CoachData {
-  tagCounts:       Record<string, number>;
-  weakTags:        string[];
+  tagCounts:    Record<string, number>;
+  weakTags:     string[];
   recommendations: Recommendation[];
-  aiAdvice:        string;
+  aiAdvice:     string;
+  currentTier:  string;
+  targetTier:   string;
+  totalSolved:  number;
+  maxRating:    number;
 }
 
 export function CoachView({ handle, currentRating }: CoachViewProps) {
-  const [data, setData] = useState<CoachData | null>(null);
+  const [data, setData]       = useState<CoachData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError]     = useState<string | null>(null);
 
   const handleGeneratePlan = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await fetch('/api/codeforces/coach', {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ handle, goal: currentRating + 200 }),
+        body:    JSON.stringify({ handle, goal: currentRating + 200 }),
       });
       const result = await res.json();
       if (result.error) throw new Error(result.error);
@@ -64,6 +69,7 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
         .map(([tag, count]) => ({ tag, count }))
     : [];
 
+  /* ── Empty / prompt state ─────────────────────────────────────────────── */
   if (!data) {
     return (
       <Card className="border-dashed border-2 border-primary/20 bg-primary/5">
@@ -74,7 +80,10 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
           <div className="space-y-2 max-w-md">
             <h3 className="text-2xl font-bold">AI Performance Coach</h3>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              Analyzes your last 2000 submissions, identifies your weakest topics, and generates a personalized training plan with targeted problems to reach <strong className="text-foreground">rating {currentRating + 200}</strong>.
+              Analyzes your last 2 000 submissions, maps your weak topics, and delivers a
+              personalized training plan to reach{' '}
+              <strong className="text-foreground">rating {currentRating + 200}</strong> — like
+              having a professional CP coach in your corner.
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-2 text-xs text-muted-foreground">
@@ -84,12 +93,11 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
               </span>
             ))}
           </div>
-          <Button size="lg" onClick={handleGeneratePlan} disabled={loading} className="mt-2 px-8">
-            {loading ? (
-              <><Zap className="mr-2 h-4 w-4 animate-spin" /> Analyzing your profile...</>
-            ) : (
-              <><Zap className="mr-2 h-4 w-4" /> Generate My Training Plan</>
-            )}
+          <Button size="lg" onClick={handleGeneratePlan} disabled={loading} className="mt-2 px-8 gap-2">
+            {loading
+              ? <><RefreshCw className="h-4 w-4 animate-spin" /> Analyzing your profile...</>
+              : <><Zap className="h-4 w-4" /> Get My Coaching Report</>
+            }
           </Button>
           {error && <p className="text-destructive text-sm">{error}</p>}
         </CardContent>
@@ -97,6 +105,7 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
     );
   }
 
+  /* ── Report ───────────────────────────────────────────────────────────── */
   return (
     <AnimatePresence>
       <motion.div
@@ -112,7 +121,7 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
             </div>
             <div>
               <h3 className="font-bold text-lg">AI Coach Report</h3>
-              <p className="text-xs text-muted-foreground">Based on your recent submissions</p>
+              <p className="text-xs text-muted-foreground">Based on your last 2 000 submissions</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={handleGeneratePlan} disabled={loading} className="gap-2">
@@ -129,14 +138,16 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
                 <Target className="h-3.5 w-3.5 text-blue-400" /> Next Milestone
               </div>
               <div className="text-3xl font-extrabold text-blue-400">{currentRating + 200}</div>
-              <div className="text-xs text-muted-foreground mt-1">Target rating</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                Target — <span className="text-blue-400 font-medium">{data.targetTier}</span>
+              </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-red-500/10 to-transparent border-red-500/20">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                <TrendingDown className="h-3.5 w-3.5 text-red-400" /> Weakest Topic
+                <AlertTriangle className="h-3.5 w-3.5 text-red-400" /> Weakest Topic
               </div>
               <div className="text-xl font-bold text-red-400 capitalize leading-tight">
                 {data.weakTags[0] || '—'}
@@ -148,50 +159,68 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
           <Card className="bg-gradient-to-br from-emerald-500/10 to-transparent border-emerald-500/20">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                <Zap className="h-3.5 w-3.5 text-emerald-400" /> Weak Tags Found
+                <Medal className="h-3.5 w-3.5 text-emerald-400" /> Current Tier
               </div>
-              <div className="text-3xl font-extrabold text-emerald-400">{data.weakTags.length}</div>
-              <div className="text-xs text-muted-foreground mt-1">Topics to improve</div>
+              <div className="text-xl font-bold text-emerald-400 leading-tight">{data.currentTier}</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                Peak: <span className="font-medium text-foreground">{data.maxRating}</span> · {data.totalSolved} solved
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Weak Tags Badges */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <TrendingDown className="h-4 w-4 text-red-400" />
-              Your Weak Topics (Prioritize These)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {data.weakTags.map((tag, i) => (
-                <Badge
-                  key={tag}
-                  variant="outline"
-                  className="border-red-500/30 text-red-400 bg-red-500/5 capitalize"
-                >
-                  #{i + 1} {tag}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
+        {/* Coach Advice — parsed sections */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* AI Advice */}
+          {/* AI Advice — rendered as section cards */}
           <Card className="lg:col-span-3 border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Brain className="h-4 w-4 text-primary" />
-                Strategic Training Plan
+                Your Coaching Report
               </CardTitle>
-              <CardDescription>AI-generated advice based on your performance</CardDescription>
+              <CardDescription>Personalized advice from your AI coach</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="bg-muted/40 rounded-lg p-4 text-sm leading-relaxed whitespace-pre-wrap border border-border/50">
-                {data.aiAdvice}
+              <div className="space-y-4">
+                {data.aiAdvice.split('\n\n').filter(Boolean).map((block, i) => {
+                  const isStand   = block.startsWith('🎯');
+                  const isWeak    = block.startsWith('⚠️');
+                  const isPlan    = block.startsWith('📅');
+                  const isContest = block.startsWith('🏆');
+                  const isTip     = block.startsWith('💡');
+
+                  const icon = isStand   ? <Target      className="h-4 w-4 text-primary     shrink-0 mt-0.5" />
+                             : isWeak    ? <AlertTriangle className="h-4 w-4 text-red-400    shrink-0 mt-0.5" />
+                             : isPlan    ? <CalendarDays  className="h-4 w-4 text-blue-400   shrink-0 mt-0.5" />
+                             : isContest ? <Trophy        className="h-4 w-4 text-violet-400 shrink-0 mt-0.5" />
+                             : isTip     ? <Lightbulb     className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                             :             <Flame         className="h-4 w-4 text-primary     shrink-0 mt-0.5" />;
+
+                  const bgClass = isStand   ? 'bg-primary/5    border-primary/20'
+                                : isWeak    ? 'bg-red-500/5    border-red-500/20'
+                                : isPlan    ? 'bg-blue-500/5   border-blue-500/20'
+                                : isContest ? 'bg-violet-500/5 border-violet-500/20'
+                                : isTip     ? 'bg-emerald-500/5 border-emerald-500/20'
+                                :             'bg-muted/30     border-border/50';
+
+                  const lines  = block.split('\n');
+                  const header = lines[0];
+                  const body   = lines.slice(1).join('\n').trim();
+
+                  return (
+                    <div key={i} className={`rounded-lg border p-3.5 ${bgClass}`}>
+                      <div className="flex items-start gap-2">
+                        {icon}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm mb-1">{header}</p>
+                          {body && (
+                            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{body}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -249,6 +278,36 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
           </Card>
         </div>
 
+        {/* Weak Tags — clickable to CF tag filter */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <TrendingDown className="h-4 w-4 text-red-400" />
+              Your Weak Topics (Prioritize These)
+            </CardTitle>
+            <CardDescription>Tap any tag to find problems on Codeforces</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {data.weakTags.map((tag, i) => (
+                <a
+                  key={tag}
+                  href={`https://codeforces.com/problemset?tags=${encodeURIComponent(tag)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Badge
+                    variant="outline"
+                    className="border-red-500/30 text-red-400 bg-red-500/5 capitalize hover:bg-red-500/10 transition-colors cursor-pointer"
+                  >
+                    #{i + 1} {tag}
+                  </Badge>
+                </a>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Skill Distribution Chart */}
         <Card>
           <CardHeader>
@@ -257,7 +316,9 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
               Skill Distribution
             </CardTitle>
             <CardDescription>
-              Problems solved per topic — <span className="text-red-400">red = weak area</span>, <span className="text-primary">blue = strong</span>
+              Problems solved per topic —{' '}
+              <span className="text-red-400">red = weak area</span>,{' '}
+              <span className="text-primary">blue = strong</span>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -269,7 +330,7 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
                   <YAxis
                     dataKey="tag"
                     type="category"
-                    width={130}
+                    width={150}
                     tick={{ fontSize: 11, fill: '#888' }}
                     axisLine={false}
                     tickLine={false}
