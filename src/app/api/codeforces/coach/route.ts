@@ -140,7 +140,7 @@ export async function POST(request: Request) {
         score: p.tags.some((t: string) => weakTags.includes(t)) ? 10 : 0,
       }))
       .sort((a, b) => b.score - a.score || (a.rating ?? 0) - (b.rating ?? 0))
-      .slice(0, 5);
+      .slice(0, 15);
 
     // 6. AI Advice Generation
     let aiAdvice = "";

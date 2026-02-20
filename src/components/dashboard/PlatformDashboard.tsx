@@ -71,6 +71,8 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
   const [tagCounts,      setTagCounts]      = useState<Record<string, number>>({});
   const [loading,        setLoading]        = useState(true);
   const [error,          setError]          = useState<string | null>(null);
+  // Shared goal — updated when user edits it in GoalStatus
+  const [goalRating,     setGoalRating]     = useState<number>(0); // 0 = not yet initialised
 
   useEffect(() => {
     async function fetchData() {
@@ -95,6 +97,8 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
             avatar: data.info.titlePhoto,
           };
           setProfile(newProfile);
+          // Initialise goal to next rank target (only on first load)
+          setGoalRating(prev => prev === 0 ? getNextRank(data.info.rating || 0).target : prev);
 
           // Rating history
           setRatingHistory(data.ratingHistory.map((r: { ratingUpdateTimeSeconds: number; newRating: number }) => ({
@@ -258,15 +262,20 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
           <GoalStatus
             key={`${platform}-${handle}`}
             currentRating={profile.rating}
-            initialGoal={nextRank.target}
+            initialGoal={goalRating || nextRank.target}
             recommendations={recommendations}
+            onGoalChange={setGoalRating}
           />
         </div>
 
         {/* AI Coach — full width, Codeforces only */}
         {platform === 'Codeforces' && (
           <div className="col-span-12">
-            <CoachView handle={handle} currentRating={profile.rating} />
+            <CoachView
+              handle={handle}
+              currentRating={profile.rating}
+              goalRating={goalRating || nextRank.target}
+            />
           </div>
         )}
       </div>

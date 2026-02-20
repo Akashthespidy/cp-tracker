@@ -14,9 +14,10 @@ interface GoalStatusProps {
   currentRating: number;
   initialGoal: number;
   recommendations: Recommendation[];
+  onGoalChange?: (goal: number) => void;
 }
 
-export function GoalStatus({ currentRating, initialGoal, recommendations }: GoalStatusProps) {
+export function GoalStatus({ currentRating, initialGoal, recommendations, onGoalChange }: GoalStatusProps) {
   const [goal, setGoal] = useState(initialGoal);
   const [displayedGoal, setDisplayedGoal] = useState(initialGoal);
   const [editing, setEditing] = useState(false);
@@ -31,6 +32,7 @@ export function GoalStatus({ currentRating, initialGoal, recommendations }: Goal
 
   const handleGoalUpdate = () => {
     setDisplayedGoal(goal);
+    onGoalChange?.(goal);
     setEditing(false);
   };
 

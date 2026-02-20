@@ -17,6 +17,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface CoachViewProps {
   handle: string;
   currentRating: number;
+  goalRating: number;
 }
 
 interface Recommendation {
@@ -38,19 +39,21 @@ interface CoachData {
   maxRating:    number;
 }
 
-export function CoachView({ handle, currentRating }: CoachViewProps) {
-  const [data, setData]       = useState<CoachData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState<string | null>(null);
+export function CoachView({ handle, currentRating, goalRating }: CoachViewProps) {
+  const [data, setData]           = useState<CoachData | null>(null);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   const handleGeneratePlan = async () => {
     setLoading(true);
     setError(null);
+    setVisibleCount(5); // reset on refresh
     try {
       const res = await fetch('/api/codeforces/coach', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ handle, goal: currentRating + 200 }),
+        body:    JSON.stringify({ handle, goal: goalRating }),
       });
       const result = await res.json();
       if (result.error) throw new Error(result.error);
@@ -82,7 +85,7 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
             <p className="text-muted-foreground text-sm leading-relaxed">
               Analyzes your last 2 000 submissions, maps your weak topics, and delivers a
               personalized training plan to reach{' '}
-              <strong className="text-foreground">rating {currentRating + 200}</strong> — like
+              <strong className="text-foreground">rating {goalRating}</strong> — like
               having a professional CP coach in your corner.
             </p>
           </div>
@@ -138,7 +141,7 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
                 <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
                   <Target className="h-3.5 w-3.5 text-blue-400" /> Next Milestone
                 </div>
-                <div className="text-3xl font-extrabold text-blue-400">{currentRating + 200}</div>
+                <div className="text-3xl font-extrabold text-blue-400">{goalRating}</div>
                 <div className="text-xs text-muted-foreground mt-1">
                   Target — <span className="text-blue-400 font-medium">{data.targetTier}</span>
                 </div>
@@ -251,7 +254,7 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {data.recommendations.map((prob, i) => (
+                {data.recommendations.slice(0, visibleCount).map((prob, i) => (
                   <a
                     key={i}
                     href={`https://codeforces.com/contest/${prob.contestId}/problem/${prob.index}`}
@@ -288,6 +291,18 @@ export function CoachView({ handle, currentRating }: CoachViewProps) {
                     </div>
                   </a>
                 ))}
+                {/* View More / Less toggle */}
+                {data.recommendations.length > 5 && (
+                  <button
+                    onClick={() => setVisibleCount(v => v >= data.recommendations.length ? 5 : Math.min(v + 5, data.recommendations.length))}
+                    className="w-full mt-1 text-xs text-primary hover:text-primary/80 font-medium py-2 rounded-lg border border-primary/20 hover:bg-primary/5 transition-all flex items-center justify-center gap-1"
+                  >
+                    {visibleCount >= data.recommendations.length
+                      ? '↑ Show Less'
+                      : `↓ View More (${data.recommendations.length - visibleCount} more)`
+                    }
+                  </button>
+                )}
               </div>
             </CardContent>
           </Card>
