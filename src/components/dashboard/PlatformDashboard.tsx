@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAtom } from 'jotai';
+import { platformGoalsAtom } from '@/lib/store';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Platform, getMockProfile, getRatingHistory, getProblemStats,
@@ -71,8 +73,15 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
   const [tagCounts,      setTagCounts]      = useState<Record<string, number>>({});
   const [loading,        setLoading]        = useState(true);
   const [error,          setError]          = useState<string | null>(null);
-  // Shared goal — updated when user edits it in GoalStatus
-  const [goalRating,     setGoalRating]     = useState<number>(0); // 0 = not yet initialised
+
+  // Shared goal — persisted to localStorage via jotai
+  const [goalsMap, setGoalsMap] = useAtom(platformGoalsAtom);
+  const goalKey = `${platform}-${handle}`;
+  const goalRating = goalsMap[goalKey] || 0;
+
+  const handleGoalChange = (val: number) => {
+    setGoalsMap(prev => ({ ...prev, [goalKey]: val }));
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -97,8 +106,9 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
             avatar: data.info.titlePhoto,
           };
           setProfile(newProfile);
-          // Initialise goal to next rank target (only on first load)
-          setGoalRating(prev => prev === 0 ? getNextRank(data.info.rating || 0).target : prev);
+          // Initialise goal to next rank target (only on first load if missing)
+          const target = getNextRank(data.info.rating || 0).target;
+          setGoalsMap(prev => prev[goalKey] ? prev : { ...prev, [goalKey]: target });
 
           // Rating history
           setRatingHistory(data.ratingHistory.map((r: { ratingUpdateTimeSeconds: number; newRating: number }) => ({
@@ -175,6 +185,10 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
           setProblemStats(getProblemStats(platform));
           setRecentContests(getRecentContests(platform));
           setRecommendations(getRecommendations(platform, getMockProfile(platform, handle).rating));
+          
+          const defaultTarget = getNextRank(getMockProfile(platform, handle).rating).target;
+          setGoalsMap(prev => prev[goalKey] ? prev : { ...prev, [goalKey]: defaultTarget });
+          
           setLoading(false);
         }, 400);
         return () => clearTimeout(timer);
@@ -182,7 +196,7 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
     }
 
     fetchData();
-  }, [platform, handle]);
+  }, [platform, handle, goalKey, setGoalsMap]);
 
   // ── Loading ──────────────────────────────────────────────────────────────────
   if (loading) {
@@ -209,12 +223,19 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
   }
 
   const rankColor      = getRankColor(profile.rank);
-  const nextRank       = getNextRank(profile.rating);
-  // If target == current rating, user is at max rank — show full bar
-  const isMaxRank      = nextRank.target === profile.rating;
+  const cfRank         = getNextRank(profile.rating);
+  
+  const nextRank = goalRating && goalRating !== cfRank.target
+    ? { rank: 'Custom Target', target: goalRating, color: THEME_COLORS[platform] || cfRank.color }
+    : cfRank;
+
+  // If target <= current rating, user is at max rank — show full bar
+  const isMaxRank      = nextRank.target <= profile.rating && goalRating === 0;
+  
+  // Use percentage of current / target to flawlessly support huge custom targets
   const progressToNext = isMaxRank
     ? 100
-    : Math.min(100, Math.round(((profile.rating - (nextRank.target - 200)) / 200) * 100));
+    : Math.min(100, Math.max(0, Math.round((profile.rating / nextRank.target) * 100)));
 
   return (
     <motion.div
@@ -264,7 +285,7 @@ export function PlatformDashboard({ platform, handle }: PlatformDashboardProps) 
             currentRating={profile.rating}
             initialGoal={goalRating || nextRank.target}
             recommendations={recommendations}
-            onGoalChange={setGoalRating}
+            onGoalChange={handleGoalChange}
           />
         </div>
 

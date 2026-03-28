@@ -37,3 +37,5 @@ export interface SheetGoal {
 }
 
 export const sheetGoalsAtom = atomWithStorage<Record<string, SheetGoal>>('cp-tracker-sheet-goals', {});
+
+export const platformGoalsAtom = atomWithStorage<Record<string, number>>('cp-tracker-platform-goals', {});
