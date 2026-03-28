@@ -40,9 +40,9 @@ export function Navbar() {
         </Link>
 
         {/* Nav Links */}
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pr-2">
           {navLinks.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href}>
+            <Link key={href} href={href} className="shrink-0">
               <Button
                 variant="ghost"
                 size="sm"
@@ -60,10 +60,10 @@ export function Navbar() {
 
         {/* User Info */}
         {handle && (
-          <div className="flex items-center gap-2 ml-auto">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border/50 text-sm">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full bg-muted/50 border border-border/50 text-sm">
               <User className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="font-medium">{handle}</span>
+              <span className="hidden sm:block font-medium truncate max-w-[100px]">{handle}</span>
             </div>
             <Button
               variant="ghost"
