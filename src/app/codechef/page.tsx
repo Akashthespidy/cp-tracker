@@ -121,8 +121,20 @@ export default function CodeChefPage() {
                 Switch User
               </Button>
             </div>
-            {/* The CodeChef platform logic has mocked data in PlatformDashboard */}
-            <PlatformDashboard platform="CodeChef" handle={handle} />
+            <Card className="border-dashed border-2 border-orange-700/30 bg-orange-700/5 mt-8">
+              <CardContent className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                <div className="p-4 bg-orange-700/10 rounded-full">
+                  <ChefHat className="h-10 w-10 text-orange-500" />
+                </div>
+                <h2 className="text-2xl font-bold">Still Developing...</h2>
+                <p className="text-muted-foreground max-w-sm">
+                  The CodeChef integration is currently under construction. Check back soon for full rating histories and problem-solving analytics!
+                </p>
+                <Button variant="outline" onClick={() => setHandle(null)} className="mt-4">
+                  Go Back
+                </Button>
+              </CardContent>
+            </Card>
           </>
         )}
       </main>

@@ -68,7 +68,9 @@ async function fetchAndProcess(handle: string): Promise<ProcessedHandle> {
     statusRes.json(),
   ]);
 
-  if (infoData.status !== 'OK') throw new Error(`Handle not found: ${handle}`);
+  if (infoData.status !== 'OK') throw new Error(`Handle not found: ${handle} (info: ${infoData.comment || ''})`);
+  if (ratingData.status !== 'OK') throw new Error(`API error: ${handle} (rating: ${ratingData.comment || ''})`);
+  if (statusData.status !== 'OK') throw new Error(`API error: ${handle} (status: ${statusData.comment || ''})`);
 
   const info = infoData.result[0];
   const buckets: Record<RatingBucket, number> = {
@@ -79,8 +81,7 @@ async function fetchAndProcess(handle: string): Promise<ProcessedHandle> {
   const tagProblems: Record<string, SolvedProblem[]> = {};
   const solved = new Set<string>();
 
-  if (statusData.status === 'OK') {
-    for (const sub of statusData.result) {
+  for (const sub of statusData.result) {
       if (sub.verdict !== 'OK' || !sub.problem) continue;
       const key = `${sub.problem.contestId}-${sub.problem.index}`;
       if (solved.has(key)) continue;
@@ -112,7 +113,6 @@ async function fetchAndProcess(handle: string): Promise<ProcessedHandle> {
         return a.rating - b.rating;
       });
     }
-  }
 
   const result: ProcessedHandle = {
     info: {
@@ -145,7 +145,11 @@ export async function GET(req: Request) {
   }
 
   try {
-    const [a, b] = await Promise.all([fetchAndProcess(h1), fetchAndProcess(h2)]);
+    const a = await fetchAndProcess(h1);
+    // Stagger the second request to prevent Codeforces API "Call limit exceeded"
+    await new Promise(r => setTimeout(r, 400));
+    const b = await fetchAndProcess(h2);
+    
     return NextResponse.json({ a, b });
   } catch (err: unknown) {
     return NextResponse.json({ error: err instanceof Error ? (err.message ?? 'Failed to fetch') : 'Failed to fetch' }, { status: 404 });
