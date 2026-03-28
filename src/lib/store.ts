@@ -12,6 +12,11 @@ export const leetcodeHandleAtom = atomWithStorage<string | null>('cp-tracker-lc-
 export const leetcodeDataAtom         = atom<unknown>(null);
 export const leetcodeDataUsernameAtom = atom<string | null>(null);
 
+// CodeChef Handle
+export const codechefHandleAtom = atomWithStorage<string | null>('cp-tracker-cc-handle', null);
+export const codechefDataAtom         = atom<unknown>(null);
+export const codechefDataUsernameAtom = atom<string | null>(null);
+
 // Practice Sheet State
 export interface SheetProblem {
   contestId: number;

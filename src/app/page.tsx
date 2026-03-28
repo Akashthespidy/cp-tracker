@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 import { PlatformDashboard } from '@/components/dashboard/PlatformDashboard';
 import { Navbar } from '@/components/Navbar';
-import { Activity, ArrowRight, Zap, Code2 } from 'lucide-react';
+import { Activity, ArrowRight, Zap, Code2, ChefHat } from 'lucide-react';
 import { useAtom } from 'jotai';
 import { handleAtom } from '@/lib/store';
 import Link from 'next/link';
@@ -163,6 +163,26 @@ export default function Home() {
                 </p>
               </div>
               <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* CodeChef CTA banner */}
+        <Link href="/codechef" className="block group">
+          <Card className="border-orange-700/20 bg-gradient-to-r from-orange-700/5 to-transparent hover:border-orange-700/40 hover:from-orange-700/10 transition-all">
+            <CardContent className="p-5 flex items-center gap-5">
+              <div className="p-3 bg-orange-700/10 rounded-xl group-hover:bg-orange-700/20 transition-colors">
+                <ChefHat className="h-7 w-7 text-orange-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-base group-hover:text-orange-500 transition-colors">
+                  CodeChef Dashboard
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Track Rating History, analyze Problem Breakdown, and map your journey to 7 stars.
+                </p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-orange-500 group-hover:translate-x-1 transition-all" />
             </CardContent>
           </Card>
         </Link>
