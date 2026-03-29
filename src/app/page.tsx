@@ -1,37 +1,106 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 
 import { PlatformDashboard } from '@/components/dashboard/PlatformDashboard';
 import { Navbar } from '@/components/Navbar';
-import { Activity, ArrowRight, Zap, Code2, ChefHat } from 'lucide-react';
+import { Activity, ArrowRight, Zap, Code2, ChefHat, LayoutGrid } from 'lucide-react';
 import { useAtom } from 'jotai';
-import { handleAtom } from '@/lib/store';
+import { handleAtom, leetcodeHandleAtom } from '@/lib/store';
 import Link from 'next/link';
+
+type LoginPlatform = 'codeforces' | 'leetcode';
+
+const PLATFORM_CONFIG = {
+  codeforces: {
+    label: 'Codeforces',
+    icon: LayoutGrid,
+    color: 'blue',
+    accent: 'text-blue-400',
+    borderAccent: 'border-blue-500/40',
+    bgAccent: 'bg-blue-500/10',
+    btnClass: '',
+    placeholder: 'e.g. tourist, Petr, Um_nik',
+    inputLabel: 'Your Codeforces Handle',
+    headline: (
+      <>
+        From <span className="text-green-400">Pupil</span> to{' '}
+        <span className="text-blue-400">Expert</span>
+      </>
+    ),
+    subtitle: 'Track your Codeforces progress, discover your weak spots, and follow an AI-generated roadmap to your next rank.',
+    pills: ['Rating Tracker', 'Weakness Analysis', 'AI Coach', 'A2OJ Ladders', 'Solved Tracking'],
+    stats: [
+      { label: 'Problems Indexed', value: '8,000+' },
+      { label: 'Tags Analyzed', value: '35+' },
+      { label: 'Rating Range', value: '800–3500' },
+    ],
+  },
+  leetcode: {
+    label: 'LeetCode',
+    icon: Code2,
+    color: 'amber',
+    accent: 'text-amber-400',
+    borderAccent: 'border-amber-500/40',
+    bgAccent: 'bg-amber-500/10',
+    btnClass: 'bg-amber-500 hover:bg-amber-600 text-black',
+    placeholder: 'e.g. neal_wu, jiangly',
+    inputLabel: 'Your LeetCode Username',
+    headline: (
+      <>
+        Master <span className="text-amber-400">LeetCode</span>
+      </>
+    ),
+    subtitle: 'Get a full breakdown of your Easy / Medium / Hard progress, identify weak topics, and generate a personalized study plan.',
+    pills: ['Difficulty Breakdown', 'Topic Mastery', 'Contest Rating', 'AI Study Plan', 'Weak Tag Analysis'],
+    stats: [
+      { label: 'Difficulty Tiers', value: '3' },
+      { label: 'Topics Tracked', value: '40+' },
+      { label: 'AI Coach', value: '✓' },
+    ],
+  },
+} as const;
 
 export default function Home() {
   const [handle, setHandle] = useAtom(handleAtom);
+  const [, setLcHandle] = useAtom(leetcodeHandleAtom);
   const [inputHandle, setInputHandle] = useState('');
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [platform, setPlatform] = useState<LoginPlatform>('codeforces');
+  const router = useRouter();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
+  const cfg = PLATFORM_CONFIG[platform];
+
   const submitHandle = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!inputHandle.trim()) return;
     setLoading(true);
     setTimeout(() => {
-      setHandle(inputHandle.trim());
+      if (platform === 'codeforces') {
+        setHandle(inputHandle.trim());
+      } else {
+        setLcHandle(inputHandle.trim());
+        router.push('/leetcode');
+      }
       setLoading(false);
     }, 400);
+  };
+
+  const switchPlatform = (p: LoginPlatform) => {
+    if (p === platform) return;
+    setPlatform(p);
+    setInputHandle('');
   };
 
   if (!mounted) return null;
@@ -43,7 +112,9 @@ export default function Home() {
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-20 relative overflow-hidden">
           {/* Background glow */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-3xl" />
+            <div className={`absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full blur-3xl transition-colors duration-700 ${
+              platform === 'codeforces' ? 'bg-blue-500/8' : 'bg-amber-500/8'
+            }`} />
           </div>
 
           <motion.div
@@ -58,36 +129,69 @@ export default function Home() {
               AI-Powered CP Training
             </div>
 
-            {/* Headline */}
-            <div className="space-y-4">
-              <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight leading-tight">
-                From <span className="text-green-400">Pupil</span> to{' '}
-                <span className="text-blue-400">Expert</span>
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-md mx-auto">
-                Track your Codeforces progress, discover your weak spots, and follow an AI-generated roadmap to your next rank.
-              </p>
-            </div>
+            {/* Headline — animated swap */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={platform}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-4"
+              >
+                <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight">
+                  {cfg.headline}
+                </h1>
+                <p className="text-base sm:text-lg text-muted-foreground max-w-md mx-auto">
+                  {cfg.subtitle}
+                </p>
+              </motion.div>
+            </AnimatePresence>
 
             {/* Feature Pills */}
             <div className="flex flex-wrap justify-center gap-2 text-sm">
-              {['Rating Tracker', 'Weakness Analysis', 'AI Coach', 'A2OJ Ladders', 'Solved Tracking'].map(f => (
+              {cfg.pills.map(f => (
                 <span key={f} className="px-3 py-1 rounded-full bg-muted border border-border/50 text-muted-foreground">
                   {f}
                 </span>
               ))}
             </div>
 
-            {/* Input Form */}
+            {/* Input Form with platform toggle */}
             <Card className="border-border/50 bg-card/50 backdrop-blur-sm shadow-2xl">
-              <CardContent className="p-6">
+              <CardContent className="p-6 space-y-5">
+                {/* Platform Toggle */}
+                <div className="flex rounded-lg border border-border/50 bg-muted/40 p-1 gap-1">
+                  {(Object.keys(PLATFORM_CONFIG) as LoginPlatform[]).map(p => {
+                    const c = PLATFORM_CONFIG[p];
+                    const Icon = c.icon;
+                    const active = p === platform;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => switchPlatform(p)}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-semibold transition-all ${
+                          active
+                            ? 'bg-background shadow-sm text-foreground'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {c.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Form */}
                 <form onSubmit={submitHandle} className="space-y-4">
                   <div className="space-y-2 text-left">
                     <label className="text-sm font-medium text-muted-foreground">
-                      Your Codeforces Handle
+                      {cfg.inputLabel}
                     </label>
                     <Input
-                      placeholder="e.g. tourist, Petr, Um_nik"
+                      placeholder={cfg.placeholder}
                       value={inputHandle}
                       onChange={(e) => setInputHandle(e.target.value)}
                       className="h-12 text-base bg-background/50 border-border/50"
@@ -96,7 +200,7 @@ export default function Home() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full h-12 text-base font-semibold"
+                    className={`w-full h-12 text-base font-semibold ${cfg.btnClass}`}
                     disabled={loading || !inputHandle.trim()}
                   >
                     {loading ? (
@@ -117,11 +221,7 @@ export default function Home() {
 
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-4 text-center">
-              {[
-                { label: 'Problems Indexed', value: '8,000+' },
-                { label: 'Tags Analyzed', value: '35+' },
-                { label: 'Rating Range', value: '800–3500' },
-              ].map(s => (
+              {cfg.stats.map(s => (
                 <div key={s.label} className="space-y-1">
                   <div className="text-2xl font-bold text-primary">{s.value}</div>
                   <div className="text-xs text-muted-foreground">{s.label}</div>
