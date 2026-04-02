@@ -1,10 +1,15 @@
 
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import OpenAI from "openai";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy",
 });
+
+// 5 requests per minute — this route also hits OpenAI so be conservative
+const limiter = createRateLimiter(60_000, 5);
 
 interface CfProblem {
   contestId: number;
@@ -46,6 +51,16 @@ const COMMON_TAGS = [
 
 export async function POST(request: Request) {
   try {
+    const headersList = await headers();
+    const ip = headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+
+    if (limiter.isLimited(ip)) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded — please wait a minute before retrying." },
+        { status: 429 },
+      );
+    }
+
     const { handle, goal } = await request.json();
 
     if (!handle) {

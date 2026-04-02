@@ -39,3 +39,28 @@ export interface SheetGoal {
 export const sheetGoalsAtom = atomWithStorage<Record<string, SheetGoal>>('cp-tracker-sheet-goals', {});
 
 export const platformGoalsAtom = atomWithStorage<Record<string, number>>('cp-tracker-platform-goals', {});
+
+// ── Cached AI Coach Data (localStorage) ────────────────────────────────────────
+// key = "cf-{handle}" or "lc-{username}", value = { data, timestamp }
+export interface CachedCoachEntry {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any;
+  ts: number;   // Date.now() when generated
+}
+
+export const cachedCoachAtom = atomWithStorage<Record<string, CachedCoachEntry>>(
+  'cp-tracker-coach-cache',
+  {},
+);
+
+// ── Saved Profiles Registry ────────────────────────────────────────────────────
+export interface SavedProfile {
+  handle:   string;
+  platform: 'codeforces' | 'leetcode';
+  addedAt:  number;  // Date.now()
+}
+
+export const savedProfilesAtom = atomWithStorage<SavedProfile[]>(
+  'cp-tracker-saved-profiles',
+  [],
+);

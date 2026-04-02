@@ -9,9 +9,9 @@ import { Card, CardContent } from '@/components/ui/card';
 
 import { PlatformDashboard } from '@/components/dashboard/PlatformDashboard';
 import { Navbar } from '@/components/Navbar';
-import { Activity, ArrowRight, Zap, Code2, ChefHat, LayoutGrid } from 'lucide-react';
+import { Activity, ArrowRight, Zap, Code2, ChefHat, LayoutGrid, User, Trash2 } from 'lucide-react';
 import { useAtom } from 'jotai';
-import { handleAtom, leetcodeHandleAtom } from '@/lib/store';
+import { handleAtom, leetcodeHandleAtom, savedProfilesAtom, SavedProfile } from '@/lib/store';
 import Link from 'next/link';
 
 type LoginPlatform = 'codeforces' | 'leetcode';
@@ -69,6 +69,7 @@ const PLATFORM_CONFIG = {
 export default function Home() {
   const [handle, setHandle] = useAtom(handleAtom);
   const [, setLcHandle] = useAtom(leetcodeHandleAtom);
+  const [savedProfiles, setSavedProfiles] = useAtom(savedProfilesAtom);
   const [inputHandle, setInputHandle] = useState('');
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -82,15 +83,39 @@ export default function Home() {
 
   const cfg = PLATFORM_CONFIG[platform];
 
+  const addToSavedProfiles = (h: string, p: 'codeforces' | 'leetcode') => {
+    setSavedProfiles(prev => {
+      const exists = prev.some(sp => sp.handle === h && sp.platform === p);
+      if (exists) return prev;
+      return [...prev, { handle: h, platform: p, addedAt: Date.now() }];
+    });
+  };
+
+  const removeProfile = (h: string, p: string) => {
+    setSavedProfiles(prev => prev.filter(sp => !(sp.handle === h && sp.platform === p)));
+  };
+
+  const loadSavedProfile = (sp: SavedProfile) => {
+    if (sp.platform === 'codeforces') {
+      setHandle(sp.handle);
+    } else {
+      setLcHandle(sp.handle);
+      router.push('/leetcode');
+    }
+  };
+
   const submitHandle = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!inputHandle.trim()) return;
     setLoading(true);
+    const trimmed = inputHandle.trim();
     setTimeout(() => {
       if (platform === 'codeforces') {
-        setHandle(inputHandle.trim());
+        setHandle(trimmed);
+        addToSavedProfiles(trimmed, 'codeforces');
       } else {
-        setLcHandle(inputHandle.trim());
+        setLcHandle(trimmed);
+        addToSavedProfiles(trimmed, 'leetcode');
         router.push('/leetcode');
       }
       setLoading(false);
@@ -228,6 +253,47 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
+            {/* Saved Profiles */}
+            {savedProfiles.length > 0 && (
+              <div className="w-full space-y-3">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="text-sm font-semibold text-muted-foreground">Saved Profiles</h3>
+                </div>
+                <div className="grid gap-2">
+                  {savedProfiles.map(sp => {
+                    const isCF = sp.platform === 'codeforces';
+                    return (
+                      <div
+                        key={`${sp.platform}-${sp.handle}`}
+                        className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-card/50 backdrop-blur-sm hover:bg-accent/50 transition-all group cursor-pointer"
+                        onClick={() => loadSavedProfile(sp)}
+                      >
+                        <div className={`p-2 rounded-lg ${isCF ? 'bg-blue-500/10' : 'bg-amber-500/10'}`}>
+                          {isCF
+                            ? <LayoutGrid className="h-4 w-4 text-blue-400" />
+                            : <Code2 className="h-4 w-4 text-amber-400" />
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                          <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{sp.handle}</p>
+                          <p className="text-xs text-muted-foreground">{isCF ? 'Codeforces' : 'LeetCode'}</p>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removeProfile(sp.handle, sp.platform); }}
+                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                          title="Remove profile"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </motion.div>
         </div>
       </div>

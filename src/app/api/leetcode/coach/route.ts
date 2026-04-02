@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
 import OpenAI from "openai";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy",
 });
+
+// 5 requests per minute — coach hits OpenAI
+const limiter = createRateLimiter(60_000, 5);
 
 interface SubmissionStat { difficulty: string; count: number; }
 interface TagEntry      { tagName: string; tagSlug: string; problemsSolved: number; }
@@ -16,6 +21,16 @@ const IMPORTANT_TAGS_BY_TIER = {
 
 export async function POST(req: Request) {
   try {
+    const headersList = await headers();
+    const ip = headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+
+    if (limiter.isLimited(ip)) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded — please wait a minute before retrying." },
+        { status: 429 },
+      );
+    }
+
     const { username, goalMedium, goalHard } = await req.json();
 
     if (!username) {

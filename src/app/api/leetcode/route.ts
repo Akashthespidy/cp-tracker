@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import { headers } from "next/headers";
+import { createRateLimiter } from "@/lib/rate-limit";
+
+// 10 requests per minute per IP
+const limiter = createRateLimiter(60_000, 10);
 
 // Simple in-memory cache: username → { data, timestamp }
 const cache = new Map<string, { data: unknown; ts: number }>();
@@ -59,6 +64,16 @@ const PROFILE_QUERY = `
 `;
 
 export async function GET(req: Request) {
+  const headersList = await headers();
+  const ip = headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+
+  if (limiter.isLimited(ip)) {
+    return NextResponse.json(
+      { error: "Rate limit exceeded — please wait a minute before retrying." },
+      { status: 429 },
+    );
+  }
+
   const { searchParams } = new URL(req.url);
   const username = searchParams.get("username");
 

@@ -3,8 +3,11 @@
 import {
   Brain, Zap, Target, BarChart2, TrendingDown, RefreshCw, ExternalLink,
   CheckCircle2, Trophy, Flame, Lightbulb, CalendarDays, AlertTriangle, Medal,
+  Clock,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAtom } from 'jotai';
+import { cachedCoachAtom } from '@/lib/store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,16 +41,36 @@ interface CoachData {
   maxRating:    number;
 }
 
+// 24 hours — after this the cache is considered stale (but still usable)
+const CACHE_STALE_MS = 1000 * 60 * 60 * 24;
+
 export function CoachView({ handle, goalRating }: CoachViewProps) {
+  const [coachCache, setCoachCache] = useAtom(cachedCoachAtom);
+  const cacheKey = `cf-${handle}`;
+  const cached = coachCache[cacheKey];
+
   const [data, setData]           = useState<CoachData | null>(null);
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(5);
 
-  const handleGeneratePlan = async () => {
+  // Hydrate from cache on mount
+  useEffect(() => {
+    if (cached?.data && !data) {
+      setData(cached.data as CoachData);
+    }
+  }, [cached, data]);
+
+  const handleGeneratePlan = async (forceRefresh = false) => {
+    // If cache exists and not forcing refresh, use it
+    if (!forceRefresh && cached?.data) {
+      setData(cached.data as CoachData);
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    setVisibleCount(5); // reset on refresh
+    setVisibleCount(5);
     try {
       const res = await fetch('/api/codeforces/coach', {
         method:  'POST',
@@ -57,11 +80,27 @@ export function CoachView({ handle, goalRating }: CoachViewProps) {
       const result = await res.json();
       if (result.error) throw new Error(result.error);
       setData(result);
+      // Save to localStorage cache
+      setCoachCache(prev => ({
+        ...prev,
+        [cacheKey]: { data: result, ts: Date.now() },
+      }));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to generate plan');
     } finally {
       setLoading(false);
     }
+  };
+
+  const isStale = cached?.ts ? Date.now() - cached.ts > CACHE_STALE_MS : false;
+
+  const formatAge = (ts: number) => {
+    const mins = Math.floor((Date.now() - ts) / 60_000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
   };
 
   const chartData = data?.tagCounts
@@ -95,12 +134,19 @@ export function CoachView({ handle, goalRating }: CoachViewProps) {
               </span>
             ))}
           </div>
-          <Button size="lg" onClick={handleGeneratePlan} disabled={loading} className="mt-2 px-8 gap-2">
+          <Button size="lg" onClick={() => handleGeneratePlan(false)} disabled={loading} className="mt-2 px-8 gap-2">
             {loading
               ? <><RefreshCw className="h-4 w-4 animate-spin" /> Analyzing your profile...</>
-              : <><Zap className="h-4 w-4" /> Get My Coaching Report</>
+              : cached?.data
+                ? <><Brain className="h-4 w-4" /> Load Saved Report</>
+                : <><Zap className="h-4 w-4" /> Get My Coaching Report</>
             }
           </Button>
+          {cached?.ts && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="h-3 w-3" /> Saved report from {formatAge(cached.ts)}
+            </p>
+          )}
           {error && <p className="text-destructive text-sm">{error}</p>}
         </CardContent>
       </Card>
@@ -123,12 +169,22 @@ export function CoachView({ handle, goalRating }: CoachViewProps) {
             </div>
             <div>
               <h3 className="font-bold text-lg">AI Coach Report</h3>
-              <p className="text-xs text-muted-foreground">Based on your last 2 000 submissions</p>
+              <p className="text-xs text-muted-foreground">
+                {cached?.ts && (
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Generated {formatAge(cached.ts)}
+                    {isStale && <span className="text-yellow-500 ml-1">(stale)</span>}
+                    <span className="mx-1">·</span>
+                  </span>
+                )}
+                Based on your last 2 000 submissions
+              </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleGeneratePlan} disabled={loading} className="gap-2">
+          <Button variant="outline" size="sm" onClick={() => handleGeneratePlan(true)} disabled={loading} className="gap-2">
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            Regenerate
           </Button>
         </div>
 

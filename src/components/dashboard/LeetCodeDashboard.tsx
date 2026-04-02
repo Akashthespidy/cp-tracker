@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAtom } from 'jotai';
-import { leetcodeDataAtom, leetcodeDataUsernameAtom } from '@/lib/store';
+import { leetcodeDataAtom, leetcodeDataUsernameAtom, cachedCoachAtom } from '@/lib/store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Brain, Zap, Target, TrendingDown, CheckCircle2, ExternalLink,
   RefreshCw, BookOpen, Trophy, Flame, Lightbulb, CalendarDays, AlertTriangle, Medal,
+  Clock,
 } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -114,11 +115,19 @@ function renderPieLabel({ cx = 0, cy = 0, midAngle = 0, outerRadius = 0, value }
   );
 }
 
+// 24 hours — after this the cache is considered stale (but still usable)
+const CACHE_STALE_MS = 1000 * 60 * 60 * 24;
+
 // ── Main Component ─────────────────────────────────────────────────────────────
 export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
   // Global cache — survives tab switches
   const [cachedData,         setCachedData]         = useAtom(leetcodeDataAtom);
   const [cachedUsername,     setCachedUsername]     = useAtom(leetcodeDataUsernameAtom);
+
+  // Coach AI cache (localStorage)
+  const [coachCache, setCoachCache] = useAtom(cachedCoachAtom);
+  const coachCacheKey = `lc-${username}`;
+  const cachedCoach = coachCache[coachCacheKey];
 
   const [coachData,    setCoachData]    = useState<CoachData | null>(null);
   const [loading,      setLoading]      = useState(false);
@@ -128,6 +137,24 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
 
   // Use cached data if it's for the same username, otherwise null
   const userData: UserData | null = cachedUsername === username ? (cachedData as UserData | null) : null;
+
+  // Hydrate coach from localStorage on mount
+  useEffect(() => {
+    if (cachedCoach?.data && !coachData) {
+      setCoachData(cachedCoach.data as CoachData);
+    }
+  }, [cachedCoach, coachData]);
+
+  const formatAge = (ts: number) => {
+    const mins = Math.floor((Date.now() - ts) / 60_000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
+
+  const isCoachStale = cachedCoach?.ts ? Date.now() - cachedCoach.ts > CACHE_STALE_MS : false;
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -145,7 +172,13 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
     }
   };
 
-  const fetchCoach = async () => {
+  const fetchCoach = async (forceRefresh = false) => {
+    // Use cache unless forcing refresh
+    if (!forceRefresh && cachedCoach?.data) {
+      setCoachData(cachedCoach.data as CoachData);
+      return;
+    }
+
     setCoachLoading(true);
     setCoachError(null);
     try {
@@ -157,6 +190,11 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setCoachData(data);
+      // Save to localStorage
+      setCoachCache(prev => ({
+        ...prev,
+        [coachCacheKey]: { data, ts: Date.now() },
+      }));
     } catch (e: unknown) {
       setCoachError(e instanceof Error ? e.message : 'Failed to generate plan');
     } finally {
@@ -408,15 +446,22 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
             </div>
             <Button
               size="lg"
-              onClick={fetchCoach}
+              onClick={() => fetchCoach(false)}
               disabled={coachLoading}
               className="mt-2 px-8 bg-amber-500 hover:bg-amber-600 text-black font-semibold gap-2"
             >
               {coachLoading
                 ? <><RefreshCw className="h-4 w-4 animate-spin" /> Analyzing your profile...</>
-                : <><Zap className="h-4 w-4" /> Get My Coaching Report</>
+                : cachedCoach?.data
+                  ? <><Brain className="h-4 w-4" /> Load Saved Report</>
+                  : <><Zap className="h-4 w-4" /> Get My Coaching Report</>
               }
             </Button>
+            {cachedCoach?.ts && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" /> Saved report from {formatAge(cachedCoach.ts)}
+              </p>
+            )}
             {coachError && <p className="text-destructive text-sm">{coachError}</p>}
           </CardContent>
         </Card>
@@ -432,11 +477,21 @@ export function LeetCodeDashboard({ username }: LeetCodeDashboardProps) {
                 </div>
                 <div>
                   <h3 className="font-bold text-lg">AI Coach Report</h3>
-                  <p className="text-xs text-muted-foreground">Based on your LeetCode performance profile</p>
+                  <p className="text-xs text-muted-foreground">
+                    {cachedCoach?.ts && (
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Generated {formatAge(cachedCoach.ts)}
+                        {isCoachStale && <span className="text-yellow-500 ml-1">(stale)</span>}
+                        <span className="mx-1">·</span>
+                      </span>
+                    )}
+                    Based on your LeetCode performance profile
+                  </p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={fetchCoach} disabled={coachLoading} className="gap-2">
-                <RefreshCw className={`h-3.5 w-3.5 ${coachLoading ? 'animate-spin' : ''}`} /> Refresh
+              <Button variant="outline" size="sm" onClick={() => fetchCoach(true)} disabled={coachLoading} className="gap-2">
+                <RefreshCw className={`h-3.5 w-3.5 ${coachLoading ? 'animate-spin' : ''}`} /> Regenerate
               </Button>
             </div>
 

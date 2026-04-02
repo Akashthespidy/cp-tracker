@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAtom } from 'jotai';
-import { leetcodeHandleAtom } from '@/lib/store';
+import { leetcodeHandleAtom, savedProfilesAtom } from '@/lib/store';
 import { Navbar } from '@/components/Navbar';
 import { LeetCodeDashboard } from '@/components/dashboard/LeetCodeDashboard';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { ArrowRight, Code, CheckCircle2, Activity } from 'lucide-react';
 
 export default function LeetCodePage() {
   const [handle, setHandle] = useAtom(leetcodeHandleAtom);
+  const [, setSavedProfiles] = useAtom(savedProfilesAtom);
   const [inputHandle, setInputHandle] = useState('');
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -26,8 +27,15 @@ export default function LeetCodePage() {
     e?.preventDefault();
     if (!inputHandle.trim()) return;
     setLoading(true);
+    const trimmed = inputHandle.trim();
     setTimeout(() => {
-      setHandle(inputHandle.trim());
+      setHandle(trimmed);
+      // Save to profiles list
+      setSavedProfiles(prev => {
+        const exists = prev.some(sp => sp.handle === trimmed && sp.platform === 'leetcode');
+        if (exists) return prev;
+        return [...prev, { handle: trimmed, platform: 'leetcode', addedAt: Date.now() }];
+      });
       setLoading(false);
     }, 300);
   };
