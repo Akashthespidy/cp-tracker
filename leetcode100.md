@@ -1,40 +1,43 @@
-# LeetCode 150 Job Interview Questions
+Merge Sorted Array
+Category: Array / Two Pointers
+Difficulty: Easy
 
-Please put your problem contents below. Whenever you add a new problem here, you can provide the raw details, and I will format and arrange them properly according to the structure below.
+Problem Statement
+You are given two integer arrays nums1 and nums2, sorted in non-decreasing order, and two integers m and n, representing the number of elements in nums1 and nums2 respectively. Merge nums1 and nums2 into a single array sorted in non-decreasing order.
+The final sorted array should be stored inside the array nums1. To accommodate this, nums1 has a length of m + n.
 
----
+Solution Code
+C++
+class Solution {
+public:
+    void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {
+        int i = m - 1; // Index of last element in nums1's valid part
+        int j = n - 1; // Index of last element in nums2
+        int k = m + n - 1; // Index of last position in nums1
 
-## Example Structure
-
-### Two Sum
-**Category:** Array
-**Difficulty:** Easy
-
-#### Problem Statement
-Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.
-You may assume that each input would have exactly one solution, and you may not use the same element twice.
-
-#### Solution Code
-```javascript
-function twoSum(nums, target) {
-    const map = new Map();
-    for (let i = 0; i < nums.length; i++) {
-        const complement = target - nums[i];
-        if (map.has(complement)) {
-            return [map.get(complement), i];
+        while (i >= 0 && j >= 0) {
+            if (nums1[i] > nums2[j]) {
+                nums1[k] = nums1[i];
+                i--;
+            } else {
+                nums1[k] = nums2[j];
+                j--;
+            }
+            k--;
         }
-        map.set(nums[i], i);
+
+        // If any elements remain in nums2, copy them
+        while (j >= 0) {
+            nums1[k] = nums2[j];
+            j--;
+            k--;
+        }
     }
-    return [];
-}
-```
+};
+English Description
+The Funny Logic: "Respect the Elders First!"
+Imagine nums1 is a room with some people and a few empty chairs at the back. nums2 is another group waiting to enter. To keep things sorted without a mess, we compare the "biggest" people from both groups and seat them in the backmost chairs of nums1 first. We use three pointers: i for the last person in nums1, j for the last person in nums2, and k for the last empty chair. By filling from the back, we ensure we don't accidentally sit on someone already in nums1! If nums2 still has people left after nums1 is empty, we just move them into the remaining front chairs.
 
-#### English Description
-We use a hash map to store the numbers we have seen so far and their indices. For each number, we calculate its complement (target - current number). If the complement exists in the map, we have found our pair and return their indices. Otherwise, we add the current number to the map and continue.
-
-#### Bangla Description
-আমরা একটি হ্যাশ ম্যাপ ব্যবহার করে পূর্বের দেখা সংখ্যা এবং তাদের ইনডেক্সগুলো সংরক্ষণ করি। প্রতিটি সংখ্যার জন্য, আমরা তার পরিপূরক (target - বর্তমান সংখ্যা) হিসাব করি। যদি পরিপূরকটি ম্যাপে থাকে, তবে আমরা আমাদের জোড়া পেয়ে গেছি এবং তাদের ইনডেক্স ফেরত দেই। অন্যথায়, আমরা বর্তমান সংখ্যাটি ম্যাপে যোগ করি এবং চালিয়ে যাই।
-
----
-
-*(Paste your raw problem details here...)*
+Bangla Description
+মজার লজিক: "বড় ভাইদের আগে সিট দাও!"
+মনে করো nums1 একটা রুম যেখানে কিছু মানুষ অলরেডি আছে আর পেছনে কিছু খালি চেয়ার আছে। nums2 হলো আরেকটা গ্রুপ যারা ওই রুমে ঢুকবে। ঝামেলা এড়াতে আমরা দুই গ্রুপের মধ্যে যারা সবচাইতে "বড়" বা বয়স্ক, তাদের আগে খুঁজে বের করি এবং nums1-এর একদম পেছনের খালি চেয়ারগুলোতে বসিয়ে দেই। আমরা তিনটা পয়েন্টার বা আঙুল ব্যবহার করি: i হলো nums1-এর শেষ মানুষ, j হলো nums2-এর শেষ মানুষ, আর k হলো পেছনের খালি সিট। পেছন থেকে শুরু করার কারণ হলো যেন সামনের আসল মানুষদের ওপর কেউ ভুলে বসে না পড়ে (Overwrite না হয়)! যদি nums1-এর মানুষ শেষ হয়ে যায় কিন্তু nums2-তে আরও কিছু ছোট বাচ্চা বাকি থাকে, তাদের সিরিয়ালি সামনের খালি সিটগুলোতে বসিয়ে দিলেই কেল্লা ফতে!
