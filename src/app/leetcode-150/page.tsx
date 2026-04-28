@@ -136,15 +136,6 @@ export default function LeetCode150Page() {
                           ))}
                         </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => setLang(lang === 'en' ? 'bn' : 'en')}
-                      >
-                        <Globe className="w-4 h-4" />
-                        {lang === 'en' ? 'English' : 'বাংলা'}
-                      </Button>
                     </CardHeader>
 
                     <CardContent className="space-y-8">
@@ -172,10 +163,21 @@ export default function LeetCode150Page() {
 
                       {/* Explanation */}
                       <section className="space-y-3">
-                        <h3 className="text-lg font-semibold flex items-center gap-2">
-                          <Languages className="w-5 h-5 text-primary" />
-                          Explanation
-                        </h3>
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <Languages className="w-5 h-5 text-primary" />
+                            Explanation
+                          </h3>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 h-8"
+                            onClick={() => setLang(lang === 'en' ? 'bn' : 'en')}
+                          >
+                            <Globe className="w-4 h-4" />
+                            {lang === 'en' ? 'English' : 'বাংলা'}
+                          </Button>
+                        </div>
                         <div className="bg-primary/5 border border-primary/10 rounded-lg p-6 space-y-2">
                           <p className="text-xs font-bold uppercase tracking-widest text-primary">
                             {lang === 'en' ? 'English Description' : 'বাংলা ব্যাখ্যা'}
