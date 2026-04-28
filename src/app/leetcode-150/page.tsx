@@ -2,115 +2,21 @@
 
 import { useState } from 'react';
 import { Navbar } from '@/components/Navbar';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Code2, Globe, Languages, Search, ChevronRight } from 'lucide-react';
+import { BookOpen, Code2, Globe, Languages } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Mock data structure based on user request
-const categories = [
-  {
-    name: 'Array',
-    problems: [
-      {
-        id: 1,
-        title: 'Two Sum',
-        difficulty: 'Easy',
-        tags: ['Array', 'Hash Table'],
-        statement: 'Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`. You may assume that each input would have exactly one solution, and you may not use the same element twice.',
-        solution: `function twoSum(nums, target) {
-    const map = new Map();
-    for (let i = 0; i < nums.length; i++) {
-        const complement = target - nums[i];
-        if (map.has(complement)) {
-            return [map.get(complement), i];
-        }
-        map.set(nums[i], i);
-    }
-    return [];
-}`,
-        englishDesc: 'We use a hash map to store the numbers we have seen so far and their indices. For each number, we calculate its complement (target - current number). If the complement exists in the map, we have found our pair and return their indices. Otherwise, we add the current number to the map and continue.',
-        banglaDesc: 'আমরা একটি হ্যাশ ম্যাপ ব্যবহার করে পূর্বের দেখা সংখ্যা এবং তাদের ইনডেক্সগুলো সংরক্ষণ করি। প্রতিটি সংখ্যার জন্য, আমরা তার পরিপূরক (target - বর্তমান সংখ্যা) হিসাব করি। যদি পরিপূরকটি ম্যাপে থাকে, তবে আমরা আমাদের জোড়া পেয়ে গেছি এবং তাদের ইনডেক্স ফেরত দেই। অন্যথায়, আমরা বর্তমান সংখ্যাটি ম্যাপে যোগ করি এবং চালিয়ে যাই।'
-      },
-      {
-        id: 2,
-        title: '3Sum',
-        difficulty: 'Medium',
-        tags: ['Array', 'Two Pointers'],
-        statement: 'Given an integer array nums, return all the triplets [nums[i], nums[j], nums[k]] such that i != j, i != k, and j != k, and nums[i] + nums[j] + nums[k] == 0.',
-        solution: `var threeSum = function(nums) {
-    nums.sort((a, b) => a - b);
-    const result = [];
-    for (let i = 0; i < nums.length; i++) {
-        if (i > 0 && nums[i] === nums[i - 1]) continue;
-        let left = i + 1, right = nums.length - 1;
-        while (left < right) {
-            const sum = nums[i] + nums[left] + nums[right];
-            if (sum === 0) {
-                result.push([nums[i], nums[left], nums[right]]);
-                while (nums[left] === nums[left + 1]) left++;
-                while (nums[right] === nums[right - 1]) right--;
-                left++; right--;
-            } else if (sum < 0) left++;
-            else right--;
-        }
-    }
-    return result;
-};`,
-        englishDesc: 'First, we sort the array to handle duplicates easily and use two pointers. We iterate through the array, and for each element, we find pairs that sum to its negative value using two pointers (left and right). We skip duplicates at each step.',
-        banglaDesc: 'প্রথমে আমরা অ্যারেটিকে সর্ট করি যাতে ডুপ্লিকেটগুলো সহজে হ্যান্ডেল করা যায় এবং টু-পয়েন্টার ব্যবহার করা যায়। আমরা অ্যারের প্রতিটি এলিমেন্টের জন্য লুপ চালাই এবং টু-পয়েন্টার (বাম এবং ডান) ব্যবহার করে এমন জোড়া খুঁজি যাদের যোগফল ওই এলিমেন্টের নেগেটিভ মানের সমান। প্রতিটি ধাপে আমরা ডুপ্লিকেটগুলো এড়িয়ে চলি।'
-      },
-      {
-        id: 3,
-        title: 'Merge Sorted Array',
-        difficulty: 'Easy',
-        tags: ['Array', 'Two Pointers'],
-        statement: 'You are given two integer arrays nums1 and nums2, sorted in non-decreasing order, and two integers m and n, representing the number of elements in nums1 and nums2 respectively. Merge nums1 and nums2 into a single array sorted in non-decreasing order. The final sorted array should be stored inside the array nums1. To accommodate this, nums1 has a length of m + n.',
-        solution: `class Solution {
-public:
-    void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {
-        int i = m - 1; // Index of last element in nums1's valid part
-        int j = n - 1; // Index of last element in nums2
-        int k = m + n - 1; // Index of last position in nums1
-
-        while (i >= 0 && j >= 0) {
-            if (nums1[i] > nums2[j]) {
-                nums1[k] = nums1[i];
-                i--;
-            } else {
-                nums1[k] = nums2[j];
-                j--;
-            }
-            k--;
-        }
-
-        // If any elements remain in nums2, copy them
-        while (j >= 0) {
-            nums1[k] = nums2[j];
-            j--;
-            k--;
-        }
-    }
-};`,
-        englishDesc: `The Funny Logic: "Respect the Elders First!"
-Imagine nums1 is a room with some people and a few empty chairs at the back. nums2 is another group waiting to enter. To keep things sorted without a mess, we compare the "biggest" people from both groups and seat them in the backmost chairs of nums1 first. We use three pointers: i for the last person in nums1, j for the last person in nums2, and k for the last empty chair. By filling from the back, we ensure we don't accidentally sit on someone already in nums1! If nums2 still has people left after nums1 is empty, we just move them into the remaining front chairs.`,
-        banglaDesc: `মজার লজিক: "বড় ভাইদের আগে সিট দাও!"
-মনে করো nums1 একটা রুম যেখানে কিছু মানুষ অলরেডি আছে আর পেছনে কিছু খালি চেয়ার আছে। nums2 হলো আরেকটা গ্রুপ যারা ওই রুমে ঢুকবে। ঝামেলা এড়াতে আমরা দুই গ্রুপের মধ্যে যারা সবচাইতে "বড়" বা বয়স্ক, তাদের আগে খুঁজে বের করি এবং nums1-এর একদম পেছনের খালি চেয়ারগুলোতে বসিয়ে দেই। আমরা তিনটা পয়েন্টার বা আঙুল ব্যবহার করি: i হলো nums1-এর শেষ মানুষ, j হলো nums2-এর শেষ মানুষ, আর k হলো পেছনের খালি সিট। পেছন থেকে শুরু করার কারণ হলো যেন সামনের আসল মানুষদের ওপর কেউ ভুলে বসে না পড়ে (Overwrite না হয়)! যদি nums1-এর মানুষ শেষ হয়ে যায় কিন্তু nums2-তে আরও কিছু ছোট বাচ্চা বাকি থাকে, তাদের সিরিয়ালি সামনের খালি সিটগুলোতে বসিয়ে দিলেই কেল্লা ফতে!`
-      }
-    ],
-  },
-  {
-    name: 'String',
-    problems: []
-  }
-];
+import { categories } from '@/components/leetcode150/problems/index';
+import type { Problem } from '@/components/leetcode150/types';
 
 export default function LeetCode150Page() {
   const [selectedCategory, setSelectedCategory] = useState(categories[0]);
-  const [selectedProblem, setSelectedProblem] = useState(categories[0].problems[0]);
+  const [selectedProblem, setSelectedProblem] = useState<Problem | null>(
+    categories[0].problems[0] ?? null
+  );
   const [lang, setLang] = useState<'en' | 'bn'>('en');
 
   return (
@@ -118,15 +24,17 @@ export default function LeetCode150Page() {
       <Navbar />
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Sidebar */}
+
+          {/* ── Sidebar ── */}
           <aside className="w-full md:w-80 space-y-6">
             <div className="space-y-2">
               <h1 className="text-2xl font-bold tracking-tight">LeetCode 150</h1>
               <p className="text-sm text-muted-foreground">Top interview questions prepared for you.</p>
             </div>
 
+            {/* Categories */}
             <div className="space-y-4">
-              <div className="font-semibold text-sm uppercase tracking-wider text-muted-foreground px-2">Categories</div>
+              <p className="font-semibold text-sm uppercase tracking-wider text-muted-foreground px-2">Categories</p>
               <div className="space-y-1">
                 {categories.map((cat) => (
                   <Button
@@ -135,7 +43,7 @@ export default function LeetCode150Page() {
                     className="w-full justify-between"
                     onClick={() => {
                       setSelectedCategory(cat);
-                      if (cat.problems.length > 0) setSelectedProblem(cat.problems[0]);
+                      setSelectedProblem(cat.problems[0] ?? null);
                     }}
                   >
                     <span className="flex items-center gap-2">
@@ -148,8 +56,9 @@ export default function LeetCode150Page() {
               </div>
             </div>
 
+            {/* Problems list */}
             <div className="space-y-4">
-              <div className="font-semibold text-sm uppercase tracking-wider text-muted-foreground px-2">Problems</div>
+              <p className="font-semibold text-sm uppercase tracking-wider text-muted-foreground px-2">Problems</p>
               <ScrollArea className="h-[400px] rounded-md border p-2">
                 <div className="space-y-1">
                   {selectedCategory.problems.length > 0 ? (
@@ -163,16 +72,20 @@ export default function LeetCode150Page() {
                         <div className="flex flex-col gap-1 w-full">
                           <div className="flex justify-between items-center gap-2">
                             <span className="font-medium truncate">{prob.title}</span>
-                            <Badge className={
-                              prob.difficulty === 'Easy' ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20' :
-                              prob.difficulty === 'Medium' ? 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20' :
-                              'bg-red-500/10 text-red-500 hover:bg-red-500/20'
-                            }>
+                            <Badge
+                              className={
+                                prob.difficulty === 'Easy'
+                                  ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20'
+                                  : prob.difficulty === 'Medium'
+                                  ? 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'
+                                  : 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
+                              }
+                            >
                               {prob.difficulty}
                             </Badge>
                           </div>
                           <div className="flex gap-1">
-                            {prob.tags.slice(0, 2).map(tag => (
+                            {prob.tags.slice(0, 2).map((tag) => (
                               <span key={tag} className="text-[10px] text-muted-foreground">#{tag}</span>
                             ))}
                           </div>
@@ -180,14 +93,16 @@ export default function LeetCode150Page() {
                       </Button>
                     ))
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground text-sm italic">No problems yet in this category.</div>
+                    <p className="text-center py-8 text-muted-foreground text-sm italic">
+                      No problems yet in this category.
+                    </p>
                   )}
                 </div>
               </ScrollArea>
             </div>
           </aside>
 
-          {/* Content Area */}
+          {/* ── Detail Panel ── */}
           <div className="flex-1 min-w-0">
             <AnimatePresence mode="wait">
               {selectedProblem ? (
@@ -204,64 +119,68 @@ export default function LeetCode150Page() {
                       <div className="space-y-1">
                         <CardTitle className="text-3xl font-bold">{selectedProblem.title}</CardTitle>
                         <div className="flex items-center gap-2">
-                          <Badge className={
-                            selectedProblem.difficulty === 'Easy' ? 'bg-green-500/10 text-green-500' :
-                            selectedProblem.difficulty === 'Medium' ? 'bg-yellow-500/10 text-yellow-500' :
-                            'bg-red-500/10 text-red-500'
-                          }>
+                          <Badge
+                            className={
+                              selectedProblem.difficulty === 'Easy'
+                                ? 'bg-green-500/10 text-green-500'
+                                : selectedProblem.difficulty === 'Medium'
+                                ? 'bg-yellow-500/10 text-yellow-500'
+                                : 'bg-red-500/10 text-red-500'
+                            }
+                          >
                             {selectedProblem.difficulty}
                           </Badge>
                           <span className="text-muted-foreground">•</span>
-                          {selectedProblem.tags.map(tag => (
+                          {selectedProblem.tags.map((tag) => (
                             <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>
                           ))}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-2"
-                          onClick={() => setLang(lang === 'en' ? 'bn' : 'en')}
-                        >
-                          <Globe className="w-4 h-4" />
-                          {lang === 'en' ? 'English' : 'বাংলা'}
-                        </Button>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => setLang(lang === 'en' ? 'bn' : 'en')}
+                      >
+                        <Globe className="w-4 h-4" />
+                        {lang === 'en' ? 'English' : 'বাংলা'}
+                      </Button>
                     </CardHeader>
+
                     <CardContent className="space-y-8">
+                      {/* Statement */}
                       <section className="space-y-3">
                         <h3 className="text-lg font-semibold flex items-center gap-2">
                           <BookOpen className="w-5 h-5 text-primary" />
                           Problem Statement
                         </h3>
-                        <div className="bg-muted/30 rounded-lg p-4 text-muted-foreground leading-relaxed">
+                        <div className="bg-muted/30 rounded-lg p-4 text-muted-foreground leading-relaxed whitespace-pre-wrap">
                           {selectedProblem.statement}
                         </div>
                       </section>
 
+                      {/* Solution */}
                       <section className="space-y-3">
                         <h3 className="text-lg font-semibold flex items-center gap-2">
                           <Code2 className="w-5 h-5 text-primary" />
                           Solution Code
                         </h3>
-                        <div className="relative">
-                          <pre className="bg-zinc-950 text-zinc-50 p-4 rounded-lg overflow-x-auto text-sm font-mono leading-6">
-                            <code>{selectedProblem.solution}</code>
-                          </pre>
-                        </div>
+                        <pre className="bg-zinc-950 text-zinc-50 p-4 rounded-lg overflow-x-auto text-sm font-mono leading-6">
+                          <code>{selectedProblem.solution}</code>
+                        </pre>
                       </section>
 
+                      {/* Explanation */}
                       <section className="space-y-3">
                         <h3 className="text-lg font-semibold flex items-center gap-2">
                           <Languages className="w-5 h-5 text-primary" />
                           Explanation
                         </h3>
-                        <div className="bg-primary/5 border border-primary/10 rounded-lg p-6 space-y-4">
-                          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-primary">
+                        <div className="bg-primary/5 border border-primary/10 rounded-lg p-6 space-y-2">
+                          <p className="text-xs font-bold uppercase tracking-widest text-primary">
                             {lang === 'en' ? 'English Description' : 'বাংলা ব্যাখ্যা'}
-                          </div>
-                          <p className="text-foreground leading-relaxed">
+                          </p>
+                          <p className="text-foreground leading-relaxed whitespace-pre-wrap">
                             {lang === 'en' ? selectedProblem.englishDesc : selectedProblem.banglaDesc}
                           </p>
                         </div>
@@ -280,6 +199,7 @@ export default function LeetCode150Page() {
               )}
             </AnimatePresence>
           </div>
+
         </div>
       </main>
     </div>
