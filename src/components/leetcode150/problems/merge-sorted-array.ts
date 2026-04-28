@@ -1,7 +1,7 @@
 import type { Problem } from '../types';
 
 export const mergeSortedArray: Problem = {
-  id: 3,
+  id: 1,
   title: 'Merge Sorted Array',
   difficulty: 'Easy',
   tags: ['Array', 'Two Pointers'],

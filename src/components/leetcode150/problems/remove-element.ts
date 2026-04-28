@@ -1,7 +1,7 @@
 import type { Problem } from '../types';
 
 export const removeElement: Problem = {
-  id: 4,
+  id: 2,
   title: 'Remove Element',
   difficulty: 'Easy',
   tags: ['Array', 'Two Pointers'],

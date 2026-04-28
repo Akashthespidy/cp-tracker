@@ -3,18 +3,21 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import type { Category } from '../types';
 
-import { twoSum }           from './two-sum';
-import { threeSum }         from './three-sum';
 import { mergeSortedArray } from './merge-sorted-array';
 import { removeElement }    from './remove-element';
+import { twoSumII }         from './two-sum-ii';
 
 export const categories: Category[] = [
   {
     name: 'Array',
-    problems: [twoSum, threeSum, mergeSortedArray, removeElement],
+    problems: [ mergeSortedArray, removeElement, twoSumII],
   },
   {
     name: 'String',
     problems: [],
   },
+  {
+    name:'two pointer',
+    problems: [twoSumII]
+  }
 ];

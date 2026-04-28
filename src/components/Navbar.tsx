@@ -23,7 +23,7 @@ export function Navbar() {
     { href: '/',             label: 'Codeforces', icon: LayoutGrid },
     { href: '/leetcode',     label: 'LeetCode',   icon: Code2      },
     { href: '/codechef',     label: 'CodeChef',   icon: ChefHat    },
-    { href: '/leetcode-150', label: 'Top 150',    icon: BookOpen   },
+    { href: '/leetcode-150', label: 'LeetCode Top 150  Questions',    icon: BookOpen   },
     { href: '/compare',      label: 'Compare',    icon: Swords     },
     { href: '/stats',        label: 'Stats',      icon: Globe      },
     { href: '/practice',     label: 'Practice',   icon: ListTodo   },
