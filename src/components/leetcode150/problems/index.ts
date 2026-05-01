@@ -7,6 +7,7 @@ import { mergeSortedArray } from './merge-sorted-array';
 import { removeElement }    from './remove-element';
 import { twoSumII }         from './two-sum-ii';
 import { threeSum }         from './three-sum';
+import { removeDuplicatesFromSortedArray } from './remove-duplicates-from-sorted-array';
 
 export const categories: Category[] = [
   {
@@ -19,6 +20,6 @@ export const categories: Category[] = [
   },
   {
     name: 'Two Pointers',
-    problems: [twoSumII, threeSum],
+    problems: [twoSumII, threeSum, removeDuplicatesFromSortedArray],
   }
 ];
